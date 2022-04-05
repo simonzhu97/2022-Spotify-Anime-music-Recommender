@@ -1,8 +1,7 @@
-# MSiA423 Template Repository
+# MSiA423 Anime Music Recommender
 
 # Table of Contents
-* [Background](#Background)
-* [Success Criteria](#Success-Criteria)
+* [Project Charter](#Project-Charter)
 * [Directory structure ](#Directory-structure)
 * [Running the app ](#Running-the-app)
 	* [1. Initialize the database ](#1.-Initialize-the-database)
@@ -12,6 +11,7 @@
 * [Mypy](#Mypy)
 * [Pylint](#Pylint)
 
+# Project Charter
 ## Background
 Anime is hand-drawn and computer animation originating from Japan. In Japan, anime describes all animated works, regardless of style or origin. However, outside of Japan, anime usually refers specifically to animation produced in Japan. 
 
