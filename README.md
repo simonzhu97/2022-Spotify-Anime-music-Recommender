@@ -1,6 +1,7 @@
 # MSiA423 Anime Music Recommender
 Author: Simon Zhu
-QA:
+
+QA: Minzhou Huang
 
 # Table of Contents
 * [Project Charter](#Project-Charter)
