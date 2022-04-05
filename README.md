@@ -1,6 +1,8 @@
 # MSiA423 Template Repository
 
 # Table of Contents
+* [Background](#Background)
+* [Success Criteria](#Success-Criteria)
 * [Directory structure ](#Directory-structure)
 * [Running the app ](#Running-the-app)
 	* [1. Initialize the database ](#1.-Initialize-the-database)
@@ -10,7 +12,35 @@
 * [Mypy](#Mypy)
 * [Pylint](#Pylint)
 
+## Background
+Anime is hand-drawn and computer animation originating from Japan. In Japan, anime describes all animated works, regardless of style or origin. However, outside of Japan, anime usually refers specifically to animation produced in Japan. 
 
+Since the 1980s, this particular medium has witnessed great international success with the rise of subtitles and increasing distribution through streaming services. In fact, streaming services such as Netflix have invested quite some amount in this genre. In 2019, the annual overseas exports of Japanese animation exceeded $10 billion.
+
+<img src="https://github.com/MSIA/2022-msia423-Zhu-Simon-project/blob/main/figures/aot.jpeg" alt="drawing" height="300" width="500"/>
+
+## Vision
+Despite rapid growth of overseas exports, stigmas about anime still linger. Take anime music as an example. A vast majority still considers anime music as cute music that might not have much meaning. Nevertheless, in the recent years, one can find traces of jazz, rock and many other elements in anime music. By exposing people to anime music that is similar to other widely-listened music, the project could bring awareness to the diversity of anime music and therefore even piques interests in the anime industry itself.
+
+## Mission
+The project aims to provide a music recommender application where the app would recommend anime songs similar to the one the user inputs. The recommended songs would be pulled from a [dataset](https://www.kaggle.com/datasets/simonzhu97/popular-spotify-anime-songs) that includes recent hit anime songs on Spotify. 
+
+In a text input field, the user will input a song they like and the app will search for this song on Spotify, extract the corresponding song features, compare them to the songs in the anime-song-dataset, and recommend the top 5 similar anime songs based on a cosine similarity measure. For example, if the user inputs __"City of Stars"__, the app might output the following table, where each row represents a recommended song. 
+
+|      | song name  | genre | link                                     |
+| ---: | :--------- | :---- | :--------------------------------------- |
+|    1 | One Last Kiss | jazz | https://open.spotify.com/track/5RhWszHMSKzb7KiXk4Ae0M?si=88e08a24b2fb4c63 |
+|    ... | ...  | ... | ... |
+
+The table above could be altered as the project proceeds. For instance, other song features such as release dates and which anime it comes from could also be included in the table if time permits.
+
+## Success Criteria
+
+### Model performance metric
+A test dataset would be created where several users would label similar songs by hand. Prior to deployment, the recommendation system would be tested on this dataset and the performance metric would be the precision@k. That is, among the top k songs that the model recommends, how many of them are in the user-labeled songs? Currently, the threshold for publishing is set at __precision@5 = 2__, but this threshold could be further altered according to circumstances.
+
+### Business metric 
+Since the application aims to destigmatize anime and exhibits the diversity of anime music to users, the metric would be how well the recommended music is perceived by the users. After each recommendation, the app would collect users' feedbacks (ratings out of 5, with 5 being most satisfied) on the recommended music. If the average ratings are high, then the diversity of anime music is well-delivered to the users and the goal of the project is met.
 
 ## Directory structure 
 
