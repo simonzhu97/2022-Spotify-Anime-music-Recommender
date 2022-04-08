@@ -1,7 +1,6 @@
 # MSiA423 Anime Music Recommender
 Author: Simon Zhu
 
-
 # Table of Contents
 * [Project Charter](#Project-Charter)
 * [Directory structure ](#Directory-structure)
@@ -48,6 +47,8 @@ A test dataset would be created where 10 random pop songs would be chosen. Then,
 |    3 | Black Catcher | T |
 |    ... | ... | ... |
 |    439 | Blue Sky | F |
+
+The table above includes only 5 rows where "Similar to the input song "Levitating""==True.
 
 Prior to deployment, the recommendation system would be tested on this dataset and the performance metric would be the precision@k. That is, among the top k songs that the model recommends, how many of them are labeled as "similar to the input song"? Currently, the threshold for publishing is set at __precision@5 = 0.4__. That is, at least two （40%） of the five songs that the model recommends are labeled as "similar to the input song" in the test dataset. However, this threshold could be further altered according to circumstances.
 
