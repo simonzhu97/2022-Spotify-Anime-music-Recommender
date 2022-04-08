@@ -49,7 +49,7 @@ A test dataset would be created where 10 random pop songs would be chosen. Then,
 |    ... | ... | ... |
 |    439 | Blue Sky | F |
 
-Prior to deployment, the recommendation system would be tested on this dataset and the performance metric would be the precision@k. That is, among the top k songs that the model recommends, how many of them are labeled as "similar to the input song"? Currently, the threshold for publishing is set at __precision@5 = 2__. That is, at least two of the five songs that the model recommends are labeled as "similar to the input song" in the test dataset. However, this threshold could be further altered according to circumstances.
+Prior to deployment, the recommendation system would be tested on this dataset and the performance metric would be the precision@k. That is, among the top k songs that the model recommends, how many of them are labeled as "similar to the input song"? Currently, the threshold for publishing is set at __precision@5 = 0.4__. That is, at least two （40%） of the five songs that the model recommends are labeled as "similar to the input song" in the test dataset. However, this threshold could be further altered according to circumstances.
 
 ### Business metric 
 Since the application aims to destigmatize anime and exhibits the diversity of anime music to users, the metric would be how well the recommended music is perceived by the users. After each recommendation, the app would collect users' feedbacks (ratings out of 5, with 5 being most satisfied) on the recommended music. If the average ratings are high, then the diversity of anime music is well-delivered to the users and the goal of the project is met.
