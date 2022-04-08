@@ -22,7 +22,7 @@ Since the 1980s, this particular medium has witnessed great international succes
 <img src="https://github.com/MSIA/2022-msia423-Zhu-Simon-project/blob/main/figures/aot.jpeg" alt="drawing" height="300" width="500"/>
 
 ## Vision
-Despite rapid growth of overseas exports, stigmas about anime still linger. Take anime music as an example. A vast majority still considers anime music as cute music that might not have much meaning. Nevertheless, in the recent years, one can find traces of jazz, rock and many other elements in anime music. By exposing people to anime music that is similar to other widely-listened music, the project could bring awareness to the diversity of anime music and therefore even piques interests in the anime industry itself.
+Despite rapid growth of overseas exports, stigmas about anime still linger. Take anime music as an example. A vast majority still considers anime music as cute music that might not have much meaning. Nevertheless, in the recent years, one can find traces of jazz, rock and many other elements in anime music. By exposing people to anime music that is similar to other widely-listened music, the project could bring awareness to the diversity of anime music and therefore even piques interests in the anime industry itself. Thus, the target audience of the application is those who are explorative and want to identify other sources of music that fit their taste.
 
 ## Mission
 The project aims to provide a music recommender application where the app would recommend anime songs similar to the one the user inputs. The recommended songs would be pulled from a [dataset](https://www.kaggle.com/datasets/simonzhu97/popular-spotify-anime-songs) that includes recent hit anime songs on Spotify. 
@@ -39,7 +39,17 @@ The table above could be altered as the project proceeds. For instance, other so
 ## Success Criteria
 
 ### Model performance metric
-A test dataset would be created where several users would label similar songs by hand. Prior to deployment, the recommendation system would be tested on this dataset and the performance metric would be the precision@k. That is, among the top k songs that the model recommends, how many of them are in the user-labeled songs? Currently, the threshold for publishing is set at __precision@5 = 2__, but this threshold could be further altered according to circumstances.
+A test dataset would be created where 10 random pop songs would be chosen. Then, for each of these 10 songs, the top 5 anime songs that are most similar are hand-picked by knowledgeable people. An example test dataset is as follows.
+
+|      | song name  | Similar to the input song "Levitating"|
+| ---: | :--------- | :---- |
+|    1 | One Last Kiss | F | 
+|    2 | Lost in Paradise | T |
+|    3 | Black Catcher | T |
+|    ... | ... | ... |
+|    439 | Blue Sky | F |
+
+Prior to deployment, the recommendation system would be tested on this dataset and the performance metric would be the precision@k. That is, among the top k songs that the model recommends, how many of them are labeled as "similar to the input song"? Currently, the threshold for publishing is set at __precision@5 = 2__. That is, at least two of the five songs that the model recommends are labeled as "similar to the input song" in the test dataset. However, this threshold could be further altered according to circumstances.
 
 ### Business metric 
 Since the application aims to destigmatize anime and exhibits the diversity of anime music to users, the metric would be how well the recommended music is perceived by the users. After each recommendation, the app would collect users' feedbacks (ratings out of 5, with 5 being most satisfied) on the recommended music. If the average ratings are high, then the diversity of anime music is well-delivered to the users and the goal of the project is met.
