@@ -1,16 +1,23 @@
 """Creates, ingests data into, and enables querying of a table of
- songs for the PennyLane app to query from and display results to the user."""
-# mypy: plugins = sqlmypy, plugins = flasksqlamypy
+ songs for the anime_recommender app to query from and display results to the user."""
+
 import argparse
 import logging.config
 import sqlite3
 import typing
+import os
 
 import flask
 import sqlalchemy
 import sqlalchemy.orm
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.declarative import declarative_base
+
+
+engine_string = os.getenv("SQLALCHEMY_DATABASE_URI")
+if engine_string is None:
+    raise RuntimeError("SQLALCHEMY_DATABASE_URI environment variable not set; exiting")
+
 
 logger = logging.getLogger(__name__)
 
