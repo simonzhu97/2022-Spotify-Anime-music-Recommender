@@ -56,6 +56,7 @@ Prior to deployment, the recommendation system would be tested on this dataset a
 Since the application aims to destigmatize anime and exhibits the diversity of anime music to users, the metric would be how well the recommended music is perceived by the users. After each recommendation, the app would collect users' feedbacks (ratings out of 5, with 5 being most satisfied) on the recommended music. If the average ratings are high, then the diversity of anime music is well-delivered to the users and the goal of the project is met.
 
 ## Directory structure 
+
 <details>
   <summary>Click to expand!</summary>
 
@@ -105,7 +106,9 @@ Since the application aims to destigmatize anime and exhibits the diversity of a
 ├── run.py                            <- Simplifies the execution of one or more of the src scripts  
 ├── requirements.txt                  <- Python package dependencies 
 ```
+
 </details>
+
 
 ## Running the app 
 
