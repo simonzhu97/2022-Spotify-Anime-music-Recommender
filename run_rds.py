@@ -1,6 +1,5 @@
 import sqlalchemy as sql
 import sqlalchemy.exc
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import src.add_songs as songs
 import logging
@@ -11,7 +10,8 @@ if engine_string is None:
     raise RuntimeError(
         "SQLALCHEMY_DATABASE_URI environment variable not set; exiting")
 
-logger = logging.getLogger(__name__)
+logging.config.fileConfig("config/logging/local.conf")
+logger = logging.getLogger("rds_running")
 
 Base = declarative_base()
 

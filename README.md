@@ -26,7 +26,7 @@ Despite rapid growth of overseas exports, stigmas about anime still linger. Take
 ## Mission
 The project aims to provide a music recommender application where the app would recommend anime songs similar to the one the user inputs. The recommended songs would be pulled from a [dataset](https://www.kaggle.com/datasets/simonzhu97/popular-spotify-anime-songs) that includes recent hit anime songs on Spotify. 
 
-In a text input field, the user will input a song they like and the app will search for this song on Spotify, extract the corresponding song features, compare them to the songs in the anime-song-dataset, and recommend the top 5 similar anime songs based on a cosine similarity measure. For example, if the user inputs __"City of Stars"__, the app might output the following table, where each row represents a recommended song. 
+The application will have a pretrained clustering model where similar anime songs in the list are grouped into several clusters. In a text input field, the user will input a song they like and the app will search for this song on Spotify, extract the corresponding song features, compare them to the centroids of clusters of songs yielded by the pretrained model, find the closest cluster, and recommend the top 5 similar anime songs in that cluster based on a cosine similarity measure. For example, if the user inputs __"City of Stars"__, the app might output the following table, where each row represents a recommended song. 
 
 |      | song name  | genre | link                                     |
 | ---: | :--------- | :---- | :--------------------------------------- |
@@ -56,6 +56,8 @@ Prior to deployment, the recommendation system would be tested on this dataset a
 Since the application aims to destigmatize anime and exhibits the diversity of anime music to users, the metric would be how well the recommended music is perceived by the users. After each recommendation, the app would collect users' feedbacks (ratings out of 5, with 5 being most satisfied) on the recommended music. If the average ratings are high, then the diversity of anime music is well-delivered to the users and the goal of the project is met.
 
 ## Directory structure 
+<details>
+  <summary>Click to expand!</summary>
 
 ```
 ├── README.md                         <- You are here
@@ -80,6 +82,8 @@ Since the application aims to destigmatize anime and exhibits the diversity of a
 │   ├── Dockerfile.app                <- Dockerfile for building image to run web app
 │   ├── Dockerfile.run                <- Dockerfile for building image to execute run.py  
 │   ├── Dockerfile.test               <- Dockerfile for building image to run unit tests
+|	├── Dockerfile.s3                 <- Dockerfile for building image to run s3 related operations
+|	├── Dockerfile.rds                <- Dockerfile for building image to run rds related operations
 │
 ├── figures/                          <- Generated graphics and figures to be used in reporting, documentation, etc
 │
@@ -101,8 +105,33 @@ Since the application aims to destigmatize anime and exhibits the diversity of a
 ├── run.py                            <- Simplifies the execution of one or more of the src scripts  
 ├── requirements.txt                  <- Python package dependencies 
 ```
+</details>
 
 ## Running the app 
+
+### 0. [Optional] Upload raw data to S3 bucket
+
+To build the image, run from this directory (the root of the repo): 
+```bash
+docker build -t s3 -f dockerfiles/Dockerfile.s3 .
+```
+
+To upload the raw data from your local path to the S3 bucket, you need to first provide AWS credentials in your current shell.
+```bash
+export AWS_ACCESS_KEY_ID = ...
+export AWS_SECRET_ACCESS_KEY = ...
+```
+
+Then, you can run the following code in the terminal to upload the data.
+```bash
+docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY --rm s3\
+upload\
+--s3path={your_s3_path}}\
+--local_path={path_to_your_local_data}
+```
+
+### 1. Acquire raw data from the S3 bucket.
+
 
 ### 1. Initialize the database 
 #### Build the image 

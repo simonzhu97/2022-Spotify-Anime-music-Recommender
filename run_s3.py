@@ -4,7 +4,7 @@ import logging.config
 from src.s3 import download_file_from_s3, upload_file_to_s3
 
 logging.config.fileConfig("config/logging/local.conf")
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("s3_running")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -15,9 +15,9 @@ if __name__ == '__main__':
                         "If 'download' is given, will download a file from s3 path to the local path."
                         "Default action is to upload files")
     parser.add_argument('--s3path', default='s3://2022-msia423-zhu-simon/data/raw/anime_songs.csv',
-                        help="If used, will load data via pandas")
+                        help="If used, will load data")
     parser.add_argument('--local_path', default='data/raw/anime_songs.csv',
-                        help="Where to load data to in S3")
+                        help="Where to load data in S3")
     args = parser.parse_args()
 
     if args.action == 'upload':
