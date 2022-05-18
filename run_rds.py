@@ -5,7 +5,7 @@
 import sqlalchemy as sql
 import sqlalchemy.exc
 from sqlalchemy.ext.declarative import declarative_base
-import src.add_songs as songs, SongManager
+import src.add_songs as songs
 import logging
 import os
 import argparse
@@ -41,7 +41,7 @@ if __name__ == "__main__":
             raise e
     else:
         # add data from the csv file line by line to the database
-        sm = SongManager(engine_string=args.engine_string)
+        sm = songs.SongManager(engine_string=args.engine_string)
         sm.add_songs_from_csv(data_path = args.data_path)
         sm.close()
 
