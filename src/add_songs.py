@@ -1,10 +1,11 @@
 """Creates, ingests data into, and enables querying of a table of
- songs for the PennyLane app to query from and display results to the user."""
-# mypy: plugins = sqlmypy, plugins = flasksqlamypy
+ songs for the anime_recommender app to query from and display results to the user."""
+
 import argparse
 import logging.config
 import sqlite3
 import typing
+import os
 
 import flask
 import sqlalchemy
@@ -12,31 +13,56 @@ import sqlalchemy.orm
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.declarative import declarative_base
 
+
 logger = logging.getLogger(__name__)
 
 Base: typing.Any = declarative_base()
 
 
-class Tracks(Base):
-    """Creates a data model for the database to be set up for capturing songs.
+class Songs(Base):
+    """Creates a data model for the database to be set up for capturing songs 
+    and assigning songs cluster ids.
     """
 
-    __tablename__ = 'tracks'
+    __tablename__ = 'songs'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     title = sqlalchemy.Column(sqlalchemy.String(100), unique=False,
                               nullable=False)
-    artist = sqlalchemy.Column(sqlalchemy.String(100), unique=False,
+    clusterId = sqlalchemy.Column(sqlalchemy.Integer, unique=False,
+                              nullable=False)
+    
+    danceability = sqlalchemy.Column(sqlalchemy.Float, unique=False,
+                              nullable=False)
+    energy = sqlalchemy.Column(sqlalchemy.Float, unique=False,
+                              nullable=False)
+    loudness = sqlalchemy.Column(sqlalchemy.Float, unique=False,
+                              nullable=False)
+    key = sqlalchemy.Column(sqlalchemy.Integer, unique=False,
+                              nullable=False)
+    speechiness = sqlalchemy.Column(sqlalchemy.Float, unique=False,
+                              nullable=False)
+    acousticness = sqlalchemy.Column(sqlalchemy.Float, unique=False,
+                              nullable=False)
+    instrumentalness = sqlalchemy.Column(sqlalchemy.Float, unique=False,
+                              nullable=False)
+    liveness = sqlalchemy.Column(sqlalchemy.Float, unique=False,
+                              nullable=False)
+    valence = sqlalchemy.Column(sqlalchemy.Float, unique=False,
+                              nullable=False)
+    tempo = sqlalchemy.Column(sqlalchemy.Float, unique=False,
+                              nullable=False)
+    duration = sqlalchemy.Column(sqlalchemy.Integer, unique=False,
+                              nullable=False)
+    track_uri = sqlalchemy.Column(sqlalchemy.String(200), unique=True,
                                nullable=False)
-    album = sqlalchemy.Column(sqlalchemy.String(100), unique=False,
-                              nullable=True)
 
     def __repr__(self):
-        return f'<Track {self.title}>'
+        return f'<Song {self.title} {self.track_uri}>'
 
 
 class TrackManager:
-    """Creates a SQLAlchemy connection to the tracks table.
+    """Creates a SQLAlchemy connection to the songs table.
 
     Args:
         app (:obj:`flask.app.Flask`): Flask app object for when connecting from
