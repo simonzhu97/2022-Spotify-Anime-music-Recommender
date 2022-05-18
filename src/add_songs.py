@@ -1,11 +1,10 @@
 """Creates, ingests data into, and enables querying of a table of
  songs for the anime_recommender app to query from and display results to the user."""
 
-import argparse
 import logging.config
 import sqlite3
 import typing
-import os
+import pandas as pd
 
 import flask
 import sqlalchemy
@@ -61,14 +60,14 @@ class Songs(Base):
         return f'<Song {self.title} {self.track_uri}>'
 
 
-class TrackManager:
+class SongManager:
     """Creates a SQLAlchemy connection to the songs table.
 
     Args:
         app (:obj:`flask.app.Flask`): Flask app object for when connecting from
             within a Flask app. Optional.
         engine_string (str): SQLAlchemy engine string specifying which database
-            to write to. Follows the format
+            to write to.
     """
     def __init__(self, app: typing.Optional[flask.app.Flask] = None,
                  engine_string: typing.Optional[str] = None):
@@ -91,28 +90,65 @@ class TrackManager:
         """
         self.session.close()
 
-    def add_track(self, title: str, artist: str, album: str) -> None:
+    def add_song(self, **kwargs) -> None:
         """Seeds an existing database with additional songs.
 
         Args:
-            title (str): Title of song to add to database
-            artist (str): Artist of song to add to database
-            album (str): Album of song to add to database
+            **kwargs: Other important features of the song to add to database
 
         Returns:
             None
         """
 
         session = self.session
-        track = Tracks(artist=artist, album=album, title=title)
-        session.add(track)
+        song = Songs(**kwargs)
+        session.add(song)
         session.commit()
-        logger.info("%s by %s from album, %s, added to database", title,
-                    artist, album)
+        try:
+            title = kwargs['title']
+            logger.info(f"A song called {title} is added to database")
+        except KeyError:
+            logger.error("The input song features do not contain 'title'")
+    
+    def add_songs_from_csv(self, data_path: str) -> None:
+        """Reads songs from a csv file and add them to the database
+
+        Arguments:
+            data_path -- the path to the csv file to read
+        """
+        
+        session =  self.session
+        
+        # transform the dataframe to a dictionary for convenience
+        data_list = pd.read_csv(data_path).to_dict(orient='records')
+        persist_list = []
+        
+        for data in data_list:
+            persist_list.append(Songs(**data))
+        
+        # add all songs to the database
+        try:
+            session.add_all(persist_list)
+            session.commit()
+        except sqlite3.OperationalError as err:
+            logger.error(
+                "Error page returned. Not able to add song to local sqlite "
+                "Are you offering the right database path? Error: %s ",
+                err)
+        except sqlalchemy.exc.OperationalError as err:
+            logger.error(
+                "Error page returned. Not able to add song to MySQL database.  "
+                "Please check engine string and VPN. Error: %s ", err)
+        except sqlalchemy.exc.IntegrityError:
+            my_message = ('Have you already inserted the same record into the database before? \n'
+                          'This database does not allow duplicate in the input-recommendation pair')
+            logger.error(f"{my_message} \n The original error message is: ", exc_info=True)
+        else:
+            logger.info(f"{len(persist_list)} songs have been added to the database!")
 
 
 def create_db(engine_string: str) -> None:
-    """Create database with Tracks() data model from provided engine string.
+    """Create database with Songs() data model from provided engine string.
 
     Args:
         engine_string (str): SQLAlchemy engine string specifying which database
@@ -126,33 +162,3 @@ def create_db(engine_string: str) -> None:
     Base.metadata.create_all(engine)
     logger.info("Database created.")
 
-
-def add_song(args: argparse.Namespace) -> None:
-    """Parse command line arguments and add song to database.
-
-    Args:
-        args (:obj:`argparse.Namespace`): object containing the following
-            fields:
-
-            - args.title (str): Title of song to add to database
-            - args.artist (str): Artist of song to add to database
-            - args.album (str): Album of song to add to database
-            - args.engine_string (str): SQLAlchemy engine string specifying
-              which database to write to
-
-    Returns:
-        None
-    """
-    track_manager = TrackManager(engine_string=args.engine_string)
-    try:
-        track_manager.add_track(args.title, args.artist, args.album)
-    except sqlite3.OperationalError as e:
-        logger.error(
-            "Error page returned. Not able to add song to local sqlite "
-            "database: %s. Is it the right path? Error: %s ",
-            args.engine_string, e)
-    except sqlalchemy.exc.OperationalError as e:
-        logger.error(
-            "Error page returned. Not able to add song to MySQL database.  "
-            "Please check engine string and VPN. Error: %s ", e)
-    track_manager.close()

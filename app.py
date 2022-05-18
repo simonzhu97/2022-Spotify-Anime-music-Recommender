@@ -6,7 +6,7 @@ import sqlalchemy.exc
 from flask import Flask, render_template, request, redirect, url_for
 
 # For setting up the Flask-SQLAlchemy database session
-from src.add_songs import Tracks, TrackManager
+from src.add_songs import Songs, SongManager
 
 # Initialize the Flask application
 app = Flask(__name__, template_folder="app/templates",
@@ -29,14 +29,14 @@ logger.debug(
     , app.config["PORT"])
 
 # Initialize the database session
-track_manager = TrackManager(app)
+track_manager = SongManager(app)
 
 
 @app.route('/')
 def index():
     """Main view that lists songs in the database.
 
-    Create view into index page that uses data queried from Track database and
+    Create view into index page that uses data queried from Song database and
     inserts it into the app/templates/index.html template.
 
     Returns:
