@@ -29,7 +29,7 @@ logger.debug(
     , app.config["PORT"])
 
 # Initialize the database session
-track_manager = SongManager(app)
+song_manager = SongManager(app)
 
 
 @app.route('/')

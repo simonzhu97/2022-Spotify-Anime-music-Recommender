@@ -7,3 +7,4 @@ botocore==1.15.32
 boto3==1.12.32
 s3fs==0.5.1
 fsspec==0.8.4
+pandas==1.4.2
