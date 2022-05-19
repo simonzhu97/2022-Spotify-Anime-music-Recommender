@@ -123,8 +123,11 @@ class SongManager:
         data_list = pd.read_csv(data_path).to_dict(orient='records')
         persist_list = []
         
+        # prepare data to persist into the database
         for data in data_list:
             persist_list.append(Songs(**data))
+        
+        logger.debug("%d records are prepared to be persisted",len(persist_list))
         
         # add all songs to the database
         try:
@@ -138,13 +141,14 @@ class SongManager:
         except sqlalchemy.exc.OperationalError as err:
             logger.error(
                 "Error page returned. Not able to add song to MySQL database.  "
-                "Please check engine string and VPN. Error: %s ", err)
+                "Please check engine string and VPN. \n Error: %s ", err)
         except sqlalchemy.exc.IntegrityError:
             my_message = ('Have you already inserted the same record into the database before? \n'
                           'This database does not allow duplicate in the input-recommendation pair')
-            logger.error(f"{my_message} \n The original error message is: ", exc_info=True)
+            logger.error("%s \n The original error message is: ", my_message, exc_info=True)
         else:
-            logger.info(f"{len(persist_list)} songs have been added to the database!")
+            logger.info("%d songs have been added to the database!",
+                        len(persist_list) )
 
 
 def create_db(engine_string: str) -> None:
