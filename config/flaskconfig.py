@@ -6,8 +6,14 @@ APP_NAME = "anime_song_recommender"
 SQLALCHEMY_TRACK_MODIFICATIONS = True
 HOST = "0.0.0.0"
 SQLALCHEMY_ECHO = False  # If true, SQL for queries made will be printed
-MAX_ROWS_SHOW = 100
+MAX_ROWS_SHOW = 30
 
 SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
 if SQLALCHEMY_DATABASE_URI is None:
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://user:password@host:3306/msia423_db'
+
+FEATURES = ['danceability', 'energy', 'loudness',
+       'speechiness', 'acousticness', 'instrumentalness',
+        'liveness','valence', 'tempo']
+TARGET = "clusterId"
+CENTROIDS_PATH =  "data/intermediate/centroids.csv"

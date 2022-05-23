@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="UTF-8">
+   <link href="static/fancy.css" rel="stylesheet">
+</head>
+
+<body>
+   <h3>
+      <a href="{{ url_for('index') }}">Anime Music Recommender</a>
+   </h3>
+
+   <hr />
+   <div class="col-md-12">
+      <table class="table">
+         <thead>
+            <tr>
+               <th>Title</th>
+               <th>Link To Music</th>
+               <th>ClusterId</th>
+            </tr>
+         </thead>
+
+         <tbody>
+            {% for song in songs %}
+            <tr>
+               <td>{{ song.title }}</td>
+               <td>{{ song.track_uri }}</td>
+               <td>{{ song.clusterId }}</td>
+            </tr>
+            {% endfor %}
+         </tbody>
+      </table>
+   </div>
+</body>
+
+</html>
+

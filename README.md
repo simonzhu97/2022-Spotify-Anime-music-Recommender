@@ -207,45 +207,28 @@ MAX_ROWS_SHOW = 100 # Limits the number of rows returned from the database
 To build the image, run from this directory (the root of the repo): 
 
 ```bash
- docker build -f dockerfiles/Dockerfile.app -t pennylaneapp .
+ docker build -f dockerfiles/Dockerfile.app -t flask_app .
 ```
 
-This command builds the Docker image, with the tag `pennylaneapp`, based on the instructions in `dockerfiles/Dockerfile.app` and the files existing in this directory.
+This command builds the Docker image, with the tag `flask_app`, based on the instructions in `dockerfiles/Dockerfile.app` and the files existing in this directory.
 
 #### Running the app
 
 To run the Flask app, run: 
 
 ```bash
- docker run --name test-app --mount type=bind,source="$(pwd)"/data,target=/app/data/ -p 5000:5000 pennylaneapp
+ docker run --rm --mount type=bind, source="$(pwd)"/data, target=/app/data/ -p 5000:5000 flask_app
+ docker run --env-file config/local/config --rm -it -p 5000:5000 flask_app
 ```
 You should be able to access the app at http://127.0.0.1:5000/ in your browser (Mac/Linux should also be able to access the app at http://127.0.0.1:5000/ or localhost:5000/) .
 
 The arguments in the above command do the following: 
 
-* The `--name test-app` argument names the container "test". This name can be used to kill the container once finished with it.
+* The `--rm` argument kills the container once the user is finished with it.
 * The `--mount` argument allows the app to access your local `data/` folder so it can read from the SQLlite database created in the prior section. 
 * The `-p 5000:5000` argument maps your computer's local port 5000 to the Docker container's port 5000 so that you can view the app in your browser. If your port 5000 is already being used for someone, you can use `-p 5001:5000` (or another value in place of 5001) which maps the Docker container's port 5000 to your local port 5001.
 
 Note: If `PORT` in `config/flaskconfig.py` is changed, this port should be changed accordingly (as should the `EXPOSE 5000` line in `dockerfiles/Dockerfile.app`)
-
-
-#### Kill the container 
-
-Once finished with the app, you will need to kill the container. If you named the container, you can execute the following: 
-
-```bash
-docker kill test-app 
-```
-where `test-app` is the name given in the `docker run` command.
-
-If you did not name the container, you can look up its name by running the following:
-
-```bash 
-docker container ls
-```
-
-The name will be provided in the right most column. 
 
 ## Testing
 

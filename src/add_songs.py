@@ -26,7 +26,7 @@ class Songs(Base):
     __tablename__ = 'songs'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    title = sqlalchemy.Column(sqlalchemy.String(100), unique=False,
+    title = sqlalchemy.Column(sqlalchemy.UnicodeText(100), unique=False,
                               nullable=False)
     clusterId = sqlalchemy.Column(sqlalchemy.Integer, unique=False,
                               nullable=False)
@@ -89,7 +89,7 @@ class SongManager:
 
         """
         self.session.close()
-
+    
     def add_song(self, **kwargs) -> None:
         """Seeds an existing database with additional songs.
 

@@ -24,7 +24,7 @@ if __name__ == "__main__":
                         choices=['create', 'add_data'])
     parser.add_argument("--engine_string", default=SQLALCHEMY_DATABASE_URI,
                         help="SQLAlchemy connection URI for database")
-    parser.add_argument("--data_path", default="data/final/results.csv",
+    parser.add_argument("--data_path", default="data/intermediate/clustered_songs.csv",
                         help="If use add_data, then need to provide this argument."
                         "Gives a list of songs to be added.")
 

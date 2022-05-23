@@ -1,43 +1,76 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <link href="static/basic.css" rel="stylesheet">
+    <title>Anime Songs in the Database</title>
+    <meta charset="utf-8">
+    <link href='https://fonts.googleapis.com/css?family=Roboto:400,100,300,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="static/fancy.css">
+
 </head>
 
 <body>
-    <h3>
-         <a href = "{{ url_for('index') }}">Penny Lane Music Recommender</a>
-    </h3>
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center mb-5">
+            <h1>
+                <a href="{{ url_for('index') }}">Anime Music Recommender</a>
+            </h1>
+        </div>
+    </div>
 
-    <hr/>
-    <table>
-         <thead>
-            <tr>
-               <th>Title</th>
-               <th>Artist</th>
-               <th>Album</th>
-            </tr>
-         </thead>
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center mb-5">
+            <form action="/search" method="POST">
+                <input type="text" placeholder="song_name" aria-label="song_name" name="song_name"
+                    value="{{ song_name or '' }}" />
+                <input type="text" placeholder="artist" aria-label="artist" name="artist"
+                    value="{{ artist or '' }}" />
+                <button type="submit">Search</button>
+            </form>
 
-         <tbody>
-            {% for track in tracks %}
-               <tr>
-                   <td>{{ track.title }}</td>
-                   <td>{{ track.artist }}</td>
-                   <td>{{ track.album }}</td>
-               </tr>
-            {% endfor %}
-         </tbody>
-      </table>
-      <form action="{{ url_for('add_entry') }}" method=post class=add-entry>
-      <dl>
-        <input type=text size=15 name=title placeholder="Title">
-        <input type=text size=15 name=artist placeholder="Artist">
-        <input type=text size=15 name=album placeholder="Album">
-        <input type=submit value=Add>
-      </dl>
-    </form>
+            {% if song_name %}
+            <p>
+                You have searched for {{ song_name }}; but sadly we cannot yet search blogs
+            </p>
+            {% endif %}
+        </div>
+    </div>
 
+
+    <section class="ftco-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6 text-center mb-5">
+                    <h2 class="heading-section">Anime songs in database</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Link To Music</th>
+                                    <th>ClusterId</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for song in songs %}
+                                <tr class="alert" role="alert">
+                                    <td>{{ song.title }}</td>
+                                    <td>{{ song.track_uri }}</td>
+                                    <td>{{ song.clusterId }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </body>
+
 </html>
