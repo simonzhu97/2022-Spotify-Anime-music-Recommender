@@ -1,3 +1,7 @@
+"""
+A script running operations relatingto s3.
+User can either upload and download a file to or from a s3 path.
+"""
 import argparse
 import logging.config
 

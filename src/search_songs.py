@@ -1,16 +1,22 @@
 import logging
 import os
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import spotipy
+from sklearn.metrics.pairwise import cosine_similarity
 from spotipy.oauth2 import SpotifyClientCredentials
-from sklearn.metrics.pairwise import euclidean_distances
 
 logger = logging.getLogger(__name__)
 
 CID = os.getenv("SPOTIPY_CLIENT_ID")
 SECRET = os.getenv("SPOTIPY_CLIENT_SECRET")
+
+# establish a spotify api service
+
+client_credentials_manager = SpotifyClientCredentials(
+    client_id=CID, client_secret=SECRET)
+sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
 
 def get_song_features(song_name: str, artist_name: str) -> pd.DataFrame:
@@ -28,12 +34,6 @@ def get_song_features(song_name: str, artist_name: str) -> pd.DataFrame:
         spotipy.exceptions.SpotifyException
         KeyError
     """
-    # establish a spotify api service
-
-    client_credentials_manager = SpotifyClientCredentials(
-        client_id=CID, client_secret=SECRET)
-    sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
-
     # if the user types in both fields, we are gucci
     if song_name and artist_name:
         song_to_search = f"artist:{artist_name} track:{song_name}"
@@ -57,7 +57,7 @@ def get_song_features(song_name: str, artist_name: str) -> pd.DataFrame:
         raise err
 
     # in case the search results returned nothing
-    if search_results:
+    if search_results['tracks']['total']>0:
         song_id = search_results['tracks']['items'][0]['id']
         res = [sp.audio_features(tracks=song_id)[0]]
         # transform list of song features to a dataframe that contains one row - pertaining to the song
@@ -69,6 +69,27 @@ def get_song_features(song_name: str, artist_name: str) -> pd.DataFrame:
         df = pd.DataFrame([])
 
     return df
+
+def valid_features(sub_features:list[str],all_features:list[str])->bool:
+    """A helper function that returns sub_features only if all of them are valid
+
+    Arguments:
+        sub_features -- sub_feature lists to go through
+        all_features -- the original complete list of features
+
+    Returns:
+        a boolean indicating whether the sub_features are all valid
+    
+    Raises:
+        KeyError
+    """
+    if isinstance(sub_features,str):
+        sub_features = [sub_features]
+    # check if the features provided exist
+    for fea in sub_features:
+        if not (fea in all_features):
+            return False
+    return True
 
 def get_closest_cluster(df_song:pd.DataFrame,
                         centroids:pd.DataFrame,
@@ -85,19 +106,44 @@ def get_closest_cluster(df_song:pd.DataFrame,
     Returns:
         the closest clusterId
     """
-    # check if the features provided exist
-    for fea in features:
-        if fea in df_song.columns and fea in centroids.columns:
-            continue
-        else:
-            logger.error("The features selected is not an available song feature!")
-            raise KeyError("Nonexisting feature")
+    if not (valid_features(features,df_song.columns) and valid_features(features,centroids.columns)):
+        logger.error("The features selected is not an available song feature!")
+        raise KeyError("Nonexisting feature")
+  
     # check if the target provided exist
-    if not (target in centroids.columns):
+    if not (valid_features(target, centroids.columns)):
         logger.error("The target column provided does not exist.")
         raise KeyError("Nonexisting target column")
     
     # calculate distance between the song and each cluster
-    dist = euclidean_distances(df_song[features],centroids[features])
+    dist = cosine_similarity(df_song[features],centroids[features])
+    logger.debug(dist)
     # return the cluster with the closest centroid
-    return int(centroids.loc[np.argmin(dist,axis=-1),"clusterId"])
+    return int(centroids.loc[np.argmax(dist,axis=-1),"clusterId"])
+
+def get_top_n_closest_song(df_song: pd.DataFrame, df_anime: pd.DataFrame,
+                           features:list[str], target: str, top_n: int) -> list[dict]:
+    """Select the top N closest song to the given song
+
+    Arguments:
+        df_song -- A dataframe containing the features of the song (one row)
+        df_anime -- A dataframe containing all possible anime songs with cluster ids
+        features -- A list of features to compute distance on
+        target -- The column name standing for cluster id
+        N -- number of songs to find
+
+    Returns:
+        a dataframe containing information about the found closest songs
+    """
+    
+    if not (valid_features(features,df_song.columns) and valid_features(features,df_anime.columns)):
+        logger.error("The features selected is not an available song feature!")
+        raise KeyError("Nonexisting feature")
+    # check if the target provided exist
+    if not (valid_features(target, df_anime.columns)):
+        logger.error("The target column provided does not exist.")
+        raise KeyError("Nonexisting target column")
+
+    dist = cosine_similarity(df_song[features], df_anime[features])
+    inds = np.argpartition(dist,-top_n,axis=-1)
+    return df_anime.loc[inds[0][-top_n:]].to_dict('records')
