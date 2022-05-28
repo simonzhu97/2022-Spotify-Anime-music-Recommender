@@ -1,12 +1,18 @@
+"""
+Script running the flask app
+"""
 import logging.config
 import sqlite3
 import traceback
 
+import pandas as pd
+import spotipy
 import sqlalchemy.exc
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, redirect, render_template, request, url_for
 
 # For setting up the Flask-SQLAlchemy database session
-from src.add_songs import Tracks, TrackManager
+from src.add_songs import SongManager, Songs
+from src.search_songs import get_closest_cluster, get_song_features, get_top_n_closest_song
 
 # Initialize the Flask application
 app = Flask(__name__, template_folder="app/templates",
@@ -25,18 +31,17 @@ logger.debug(
     'in config/flaskconfig.py (e.g. `-p 5000:5000`). Otherwise, go to the '
     'port defined on the left side of the port mapping '
     '(`i.e. -p THISPORT:5000`). If you are running from a Windows machine, '
-    'go to 127.0.0.1 instead of 0.0.0.0.', app.config["HOST"]
-    , app.config["PORT"])
+    'go to 127.0.0.1 instead of 0.0.0.0.', app.config["HOST"], app.config["PORT"])
 
 # Initialize the database session
-track_manager = TrackManager(app)
+song_manager = SongManager(app)
 
 
 @app.route('/')
 def index():
     """Main view that lists songs in the database.
 
-    Create view into index page that uses data queried from Track database and
+    Create view into index page that uses data queried from Song database and
     inserts it into the app/templates/index.html template.
 
     Returns:
@@ -45,21 +50,21 @@ def index():
     """
 
     try:
-        tracks = track_manager.session.query(Tracks).limit(
+        songs = song_manager.session.query(Songs).limit(
             app.config["MAX_ROWS_SHOW"]).all()
         logger.debug("Index page accessed")
-        return render_template('index.html', tracks=tracks)
-    except sqlite3.OperationalError as e:
+        return render_template('index.html', songs=songs)
+    except sqlite3.OperationalError as err:
         logger.error(
             "Error page returned. Not able to query local sqlite database: %s."
             " Error: %s ",
-            app.config['SQLALCHEMY_DATABASE_URI'], e)
+            app.config['SQLALCHEMY_DATABASE_URI'], err)
         return render_template('error.html')
-    except sqlalchemy.exc.OperationalError as e:
+    except sqlalchemy.exc.OperationalError as err:
         logger.error(
             "Error page returned. Not able to query MySQL database: %s. "
             "Error: %s ",
-            app.config['SQLALCHEMY_DATABASE_URI'], e)
+            app.config['SQLALCHEMY_DATABASE_URI'], err)
         return render_template('error.html')
     except:
         traceback.print_exc()
@@ -67,32 +72,69 @@ def index():
         return render_template('error.html')
 
 
-@app.route('/add', methods=['POST'])
-def add_entry():
-    """View that process a POST with new song input
+@app.route('/search', methods=['POST'])
+def get_entry():
+    """View that process a post with new song input
+    It searches for the closest cluster of the song
 
     Returns:
         redirect to index page
     """
 
     try:
-        track_manager.add_track(artist=request.form['artist'],
-                                album=request.form['album'],
-                                title=request.form['title'])
-        logger.info("New song added: %s by %s", request.form['title'],
+        # define the song name to be searched
+        song_name = request.form['song_name']
+        artist = request.form['artist']
+
+        # search for the song -> returns df_song with all possible features
+        try:
+            song_features = get_song_features(song_name, artist)
+        except KeyError:
+            # TODO: prints the log stream to the page!
+            return redirect(url_for('index'))
+        except spotipy.SpotifyException:
+            return redirect(url_for('index'))
+
+        # in case there aren't any search results
+        if len(song_features) == 0:
+            return redirect(url_for('index'))
+
+        centroids = pd.read_csv(app.config['CENTROIDS_PATH'])
+
+        # get closest cluster
+        cluster_id = get_closest_cluster(song_features, centroids,
+                                        app.config['FEATURES'], app.config['TARGET'])
+        logger.info("Song queried: %s by %s", request.form['song_name'],
                     request.form['artist'])
-        return redirect(url_for('index'))
-    except sqlite3.OperationalError as e:
+        logger.debug("The closest cluster is Cluster %d", cluster_id)
+
+        # fetch all songs in that cluster
+
+        songs = pd.read_sql_query(
+            sql=song_manager.session.query(
+                Songs).filter_by(clusterId=cluster_id).statement,
+            con=song_manager.database.engine
+        )
+        
+        # find the closest ones in terms of cosine_similarity
+        top_songs = get_top_n_closest_song(
+            song_features, songs, app.config['FEATURES'], app.config['TARGET'], app.config['TOP_N'])
+        
+        return render_template('search_results.html',
+                               searched=f"{song_name} by {artist}",
+                               songs=top_songs)
+
+    except sqlite3.OperationalError as err:
         logger.error(
             "Error page returned. Not able to add song to local sqlite "
             "database: %s. Error: %s ",
-            app.config['SQLALCHEMY_DATABASE_URI'], e)
+            app.config['SQLALCHEMY_DATABASE_URI'], err)
         return render_template('error.html')
-    except sqlalchemy.exc.OperationalError as e:
+    except sqlalchemy.exc.OperationalError as err:
         logger.error(
             "Error page returned. Not able to add song to MySQL database: %s. "
             "Error: %s ",
-            app.config['SQLALCHEMY_DATABASE_URI'], e)
+            app.config['SQLALCHEMY_DATABASE_URI'], err)
         return render_template('error.html')
 
 

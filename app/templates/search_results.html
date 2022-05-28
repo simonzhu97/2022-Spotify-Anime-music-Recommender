@@ -24,20 +24,17 @@
             <form action="/search" method="POST">
                 <input type="text" placeholder="song_name" aria-label="song_name" name="song_name"
                     value="{{ song_name or '' }}" />
-                <input type="text" placeholder="artist" aria-label="artist" name="artist" value="{{ artist or '' }}" />
+                <input type="text" placeholder="artist" aria-label="artist" name="artist"
+                    value="{{ artist or '' }}" />
                 <button type="submit">Search</button>
             </form>
 
-            <p>
-                Note that if the table below does not change,
-                <br> then it means that your search returns no results on Spotify!
-            </p>
-
-            <figure>
-                <img src="https://images-na.ssl-images-amazon.com/images/I/81OX9z8srBL.jpg" alt="AOT" style="width:30%">
-                <figcaption>Source: Google</figcaption>
-            </figure>
-
+            {% if searched %}
+            <h5>
+                You have searched for <span style="color: #528aae"> {{ searched }} </span>
+                <br>The following are the recommended songs
+            </h5>
+            {% endif %}
         </div>
     </div>
 
@@ -46,7 +43,7 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-6 text-center mb-5">
-                    <h2 class="heading-section">Anime songs in database</h2>
+                    <h2 class="heading-section">Recommended Anime Songs based on Your Input</h2>
                 </div>
             </div>
             <div class="row">
