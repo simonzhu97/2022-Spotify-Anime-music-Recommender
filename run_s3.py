@@ -1,11 +1,13 @@
 """
 A script running operations relatingto s3.
 User can either upload and download a file to or from a s3 path.
+If download, will also clean the file
 """
 import argparse
 import logging.config
 
 from src.s3 import download_file_from_s3, upload_file_to_s3
+from src.preprocessing import clean
 
 logging.config.fileConfig("config/logging/local.conf")
 logger = logging.getLogger("s3_running")
@@ -28,3 +30,5 @@ if __name__ == '__main__':
         upload_file_to_s3(args.local_path, args.s3path)
     else:
         download_file_from_s3(args.local_path, args.s3path)
+        # then clean the file
+        clean

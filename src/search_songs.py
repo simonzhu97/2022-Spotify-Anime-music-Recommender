@@ -1,3 +1,9 @@
+""" 
+Thhe module contains methods that 
+    1. searches for a song's features by calling Spotify's API
+    2. returns the cluster of which the centroid is closest to the song in terms of cosine similarity
+    3. returns the top N closest (in terms of cosine similarity) songs to a given song in a given cluster
+"""
 import logging
 import os
 

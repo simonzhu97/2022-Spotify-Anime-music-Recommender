@@ -90,7 +90,6 @@ def get_entry():
         try:
             song_features = get_song_features(song_name, artist)
         except KeyError:
-            # TODO: prints the log stream to the page!
             return redirect(url_for('index'))
         except spotipy.SpotifyException:
             return redirect(url_for('index'))

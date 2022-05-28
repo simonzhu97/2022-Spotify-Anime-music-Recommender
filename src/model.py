@@ -1,7 +1,15 @@
-"""Use a clusering model to cluster the anime songs
 """
+Use a clusering model to cluster the anime songs
+"""
+import pandas as pd
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.cluster import KMeans
 
-#TODO: yaml file to define useful columns
+from sklearn.metrics import silhouette_score, pairwise_distances
+
 
 def get_models_dict(df, cols, K_range, seed=42, return_list=False):
     """

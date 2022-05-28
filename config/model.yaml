@@ -1,0 +1,32 @@
+search_songs:
+  get_closest_cluster:
+    features: 
+      - danceability
+      - energy
+      - loudness
+      - speechiness
+      - acousticness
+      - instrumentalness
+      - liveness
+      - valence
+      - tempo
+    target: clusterId
+preprocessing:
+  clean:
+    col_mapper: {'name':'title', 'duration_ms':'duration', 'uri':'track_uri'}
+    cols_to_drop: ['mode','type','id','track_href','analysis_url','time_signature','Unnamed: 0']
+  featurize:
+    features:
+      - danceability
+      - energy
+      - key
+      - loudness
+      - speechiness
+      - acousticness
+      - instrumentalness
+      - liveness
+      - valence
+      - tempo
+      - title
+      - duration
+      - track_uri
