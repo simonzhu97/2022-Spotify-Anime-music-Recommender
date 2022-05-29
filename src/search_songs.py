@@ -24,7 +24,52 @@ client_credentials_manager = SpotifyClientCredentials(
     client_id=CID, client_secret=SECRET)
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
+def search_on_spotify(query: str) -> dict:
+    """A helper function that searches on Spotify with a given query
 
+    Arguments:
+        query -- the query to search on Spotify
+
+    Returns:
+        a dictionary containing search results
+    """
+    try:
+        search_results = sp.search(query, limit=1, offset=0, type="track")
+        logger.info("The song %s has been searched", query)
+    except spotipy.oauth2.SpotifyOauthError as err:
+        logger.error(
+            "The configured client id and secret does not match. Please check them again!")
+        raise err
+    return search_results
+
+def form_query(song_name: str, artist_name: str) -> str:
+    """A helper function that combines song name and artist name into a spotify query
+
+    Arguments:
+        song_name -- the song name to be searched for
+        artist_name -- the artist of the song to be searched for
+
+    Raises:
+        KeyError -- missing all fields
+    Returns:
+        a query string
+    """
+
+    # if the user types in both fields, we are gucci
+    if song_name and artist_name:
+        song_to_search = f"artist:{artist_name} track:{song_name}"
+    # if either field but not both is missing, just search for whatever you have
+    elif song_name and not artist_name:
+        song_to_search = f"track:{song_name}"
+    elif artist_name and not song_name:
+        song_to_search = f"artist:{artist_name}"
+    # if none is provided, raise an error
+    else:
+        logger.error("Please provide at least one field. Song name or artist name.")
+        raise KeyError("Fields missing")
+    return song_to_search
+    
+    
 def get_song_features(song_name: str, artist_name: str) -> pd.DataFrame:
     """Get the features for a song. If the search returns nothing,
     then returns an empty dataframe.
@@ -40,27 +85,11 @@ def get_song_features(song_name: str, artist_name: str) -> pd.DataFrame:
         spotipy.exceptions.SpotifyException
         KeyError
     """
-    # if the user types in both fields, we are gucci
-    if song_name and artist_name:
-        song_to_search = f"artist:{artist_name} track:{song_name}"
-    # if either field but not both is missing, just search for whatever you have
-    elif song_name and not artist_name:
-        song_to_search = f"track:{song_name}"
-    elif artist_name and not song_name:
-        song_to_search = f"artist:{artist_name}"
-    # if none is provided, raise an error
-    else:
-        logger.error("Please provide at least one field. Song name or artist name.")
-        raise KeyError("Fields missing")
-    
+    # form the query
+    song_to_search = form_query(song_name,artist_name)
+
     # use spotipy to search for the song
-    try:
-        search_results = sp.search(song_to_search, limit=1, offset=0, type="track")
-        logger.info("The song %s by %s has been searched", song_name, artist_name)
-    except spotipy.oauth2.SpotifyOauthError as err:
-        logger.error(
-            "The configured client id and secret does not match. Please check them again!")
-        raise err
+    search_results = search_on_spotify(song_to_search)
 
     # in case the search results returned nothing
     if search_results['tracks']['total']>0:

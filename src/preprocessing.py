@@ -52,29 +52,32 @@ def validate_features(df: pd.DataFrame, features: list[str]) -> bool:
     return True
 
 
-def clean(df_in: pd.DataFrame, col_mapper: dict, cols_to_drop: list[str]) -> pd.DataFrame:
+def clean(df_in: pd.DataFrame, col_mapper: dict, features: list[str]) -> pd.DataFrame:
     """Clean the raw dataset by changing column names and drop some unnecessary columns
 
     Arguments:
         df -- raw data in the dataframe format
         col_mapper -- a dictionary containing column names to change
-        cols_to_drop -- list of columns to drop from the dataframe
+        features -- list of features to include in the final dataframe
 
     Returns:
         a cleaned dataframe
     """
-    try:
-        df_new = df_in.drop(cols_to_drop, axis=1)
-    except KeyError as err:
-        logger.error("The column to drop does not exist")
-        raise err
     # ensure the col_mapper is indeed a dictionary
     if isinstance(col_mapper, dict):
-        df_new = df_new.rename(columns=col_mapper)
+        df_new = df_in.rename(columns=col_mapper)
     else:
         logger.error("col_mapper needs to be a dictionary, but now it is a %s",
                      type(col_mapper))
         logger.error("No columns are renamed.")
+    
+    # check if features exist`
+    if validate_features(df_new, features):
+        df_new = df_new[features]
+    else:
+        logger.error(
+            "The given features %s do not exist in the dataframe", features)
+        logger.error("The original whole dataframe is selected.")
     return df_new
 
 

@@ -6,12 +6,17 @@ import pandas as pd
 from src.s3 import download_file_from_s3, upload_file_to_s3
 from src.preprocessing import read_from_local, clean, featurize
 from src.model import get_models_dict, plot_models_performance, save_model
+from src.evaluate_model import assign_labels
+import joblib
 import yaml
+import os
 
 from config.flaskconfig import SQLALCHEMY_DATABASE_URI
 
 logging.config.fileConfig("config/logging/local.conf")
 logger = logging.getLogger("running_pipeline")
+
+S3_PATH = os.getenv("S3_PATH")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -43,14 +48,20 @@ if __name__ == '__main__':
                 logger.info('Input data loaded from %s', args.input)
             except FileNotFoundError:
                 logger.error("Cannot find file at the specified input path %s", args.input)
-            
+    
+    if args.model is not None:
+        try:
+            model_in = joblib.load(args.model)
+            logger.info('Input model loaded from %s', args.model)
+        except FileNotFoundError:
+            logger.error("Cannot find model at the specified path %s", args.model)
             
     # taking actions based on step name
     if args.step == 'acquire':
-        upload_file_to_s3(args.input, args.file_output)
+        upload_file_to_s3(args.input, S3_PATH)
     elif args.step == 'clean':
         # download file from s3 and save as an csv
-        download_file_from_s3(local_path=args.mid_output, s3path=args.input)
+        download_file_from_s3(local_path=args.mid_output, s3path=S3_PATH)
         file_in = read_from_local(args.mid_output)
         file_out = clean(file_in, **config['preprocessing']['clean'])
     elif args.step == 'featurize':
@@ -58,6 +69,8 @@ if __name__ == '__main__':
     elif args.step == 'train':
         model_d_out, model_l_out = get_models_dict(file_in, **config['model']['get_models_dict'])
         file_out = plot_models_performance(file_in, model_l_out, **config['model']['plot_models_performance'])
+    elif args.step == 'score':
+        file_out = assign_labels(file_in, model_in)
     else:
         pass
     

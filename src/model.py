@@ -1,18 +1,18 @@
 """
 Use a clusering model to cluster the anime songs
 """
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt # type: ignore
 import logging
-from sklearn.cluster import KMeans
 from typing import Optional
-from src.add_songs import Base
-from src.preprocessing import validate_features
-import joblib
 
-from sklearn.metrics import silhouette_score
+import joblib
+import matplotlib.pyplot as plt  # type: ignore
+import numpy as np
+import pandas as pd
 from sklearn.base import BaseEstimator
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
+from src.preprocessing import validate_features
 
 logger = logging.getLogger(__name__)
 WRONG_INDICATOR = -10

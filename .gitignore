@@ -12,5 +12,6 @@ data/*
 !data/sample/
 !data/external/
 !data/raw/
+!data/final/
 config/local/*
 !.gitkeep

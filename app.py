@@ -7,11 +7,12 @@ import traceback
 
 import pandas as pd
 import spotipy
+from sqlalchemy import func
 import sqlalchemy.exc
 from flask import Flask, redirect, render_template, request, url_for
 
 # For setting up the Flask-SQLAlchemy database session
-from src.add_songs import SongManager, Songs
+from src.song_manager import SongManager, Songs
 from src.search_songs import get_closest_cluster, get_song_features, get_top_n_closest_song
 
 # Initialize the Flask application
@@ -97,12 +98,32 @@ def get_entry():
         # in case there aren't any search results
         if len(song_features) == 0:
             return redirect(url_for('index'))
-
-        centroids = pd.read_csv(app.config['CENTROIDS_PATH'])
+        
+        query = song_manager.session.query(
+            Songs.clusterId,
+            func.avg(Songs.danceability).label('danceability'),
+            func.avg(Songs.energy).label('energy'),
+            func.avg(Songs.loudness).label('loudness'),
+            func.avg(Songs.speechiness).label('speechiness'),
+            func.avg(Songs.acousticness).label('acousticness'),
+            func.avg(Songs.instrumentalness).label('instrumentalness'),
+            func.avg(Songs.liveness).label('liveness'),
+            func.avg(Songs.valence).label('valence'),
+            func.avg(Songs.tempo).label('tempo')
+        ).group_by(Songs.clusterId
+        ).statement
+        
+        centroids = pd.read_sql_query(
+            sql=query,
+            con=song_manager.database.engine
+        )
 
         # get closest cluster
         cluster_id = get_closest_cluster(song_features, centroids,
                                         app.config['FEATURES'], app.config['TARGET'])
+        
+        
+        
         logger.info("Song queried: %s by %s", request.form['song_name'],
                     request.form['artist'])
         logger.debug("The closest cluster is Cluster %d", cluster_id)

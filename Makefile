@@ -1,8 +1,6 @@
-S3_PATH = s3://2022-msia423-zhu-simon/data/raw/anime_songs.csv
-
 # all: image run
-.PHONY: all image-model s3-upload cleaned features
-all: data/intermediate/cleaned.csv data/intermediate/features.csv
+.PHONY: all image-model s3-upload cleaned features models scores rds-create rds-ingest
+all: data/intermediate/cleaned.csv data/intermediate/features.csv models/res_plots.png models/kmeans.joblib data/final/clusters.csv
 
 image-model:
 	docker build -f dockerfiles/Dockerfile -t final-project .
@@ -10,12 +8,12 @@ image-model:
 # data acquisition
 s3-upload: data/raw/anime_songs.csv
 	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
-	--env-file config/local/config final-project run.py acquire --file_output=${S3_PATH} --input=$<
+	--env-file config/local/config final-project run.py acquire --input=$<
 
 # model pipeline starts here
 data/intermediate/cleaned.csv: config/model.yaml
 	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
-	--env-file config/local/config final-project run.py clean --input=${S3_PATH} \
+	--env-file config/local/config final-project run.py clean \
 	--file_output=data/intermediate/cleaned.csv --config=$< \
 	--mid_output=data/raw/downloaded.csv
 
@@ -29,10 +27,27 @@ features: data/intermediate/features.csv
 
 models/res_plots.png models/kmeans.joblib &: data/intermediate/features.csv config/model.yaml
 	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
-	--env-file config/local/config final-project run.py train --file_output=$@ --model_output=models/kmeans.joblib \
+	--env-file config/local/config final-project run.py train --file_output=models/res_plots.png --model_output=models/kmeans.joblib \
 	--input=$< --config=config/model.yaml
 
 models: models/res_plots.png models/kmeans.joblib
+
+data/final/clusters.csv: data/intermediate/cleaned.csv models/kmeans.joblib
+	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
+	--env-file config/local/config final-project run.py score --file_output=$@ --model=models/kmeans.joblib \
+	--input=$<
+
+scores: data/final/clusters.csv
+
+# ingest data to RDS instance
+rds-create:
+	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
+	--env-file config/local/config final-project run_rds.py create
+
+rds-ingest: data/final/clusters.csv
+	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
+	--env-file config/local/config final-project run_rds.py add_data \
+	--data_path=$<
 
 # web app deployment
 image-app:
