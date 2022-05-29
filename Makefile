@@ -27,7 +27,12 @@ data/intermediate/features.csv: data/intermediate/cleaned.csv config/model.yaml
 
 features: data/intermediate/features.csv
 
+models/res_plots.png models/kmeans.joblib &: data/intermediate/features.csv config/model.yaml
+	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
+	--env-file config/local/config final-project run.py train --file_output=$@ --model_output=models/kmeans.joblib \
+	--input=$< --config=config/model.yaml
 
+models: models/res_plots.png models/kmeans.joblib
 
 # web app deployment
 image-app:
@@ -46,4 +51,5 @@ clean-files:
 	rm -f data/intermediate/cleaned.csv
 	rm -f data/intermediate/features.csv
 	rm -f data/raw/downloaded.csv
+	rm -f models/*.png
 	rm -f models/*.joblib

@@ -30,3 +30,22 @@ preprocessing:
       - title
       - duration
       - track_uri
+model:
+  get_models_dict:
+    cols:
+      - danceability
+      - energy
+      - loudness
+      - speechiness
+      - acousticness
+      - instrumentalness
+      - liveness
+      - valence
+      - tempo
+    k_range: [3,4,5,6,7,8,9,10]
+    seed: 42
+    return_list: True
+  plot_models_performance:
+    k_range: [3,4,5,6,7,8,9,10]
+  save_model:
+    best_num: "5"
