@@ -55,7 +55,7 @@ Prior to deployment, the recommendation system would be tested on this dataset a
 ### Business metric 
 Since the application aims to destigmatize anime and exhibits the diversity of anime music to users, the metric would be how well the recommended music is perceived by the users. After each recommendation, the app would collect users' feedbacks (ratings out of 5, with 5 being most satisfied) on the recommended music. If the average ratings are high, then the diversity of anime music is well-delivered to the users and the goal of the project is met.
 
-## Directory structure 
+# Directory structure 
 
 <details>
   <summary>Click to expand!</summary>
@@ -109,10 +109,33 @@ Since the application aims to destigmatize anime and exhibits the diversity of a
 
 </details>
 
+---
+# Running the whole pipeline 
 
-## Running the app 
+The whole pipeline contains the following steps:
+* Data Acquisition
+* Model Pipeline
+	- Data cleaning and preprocessing
+	- Feature generation
+	- Model training
+	- Model scoring/prediction
+	- Model evaluation
+* Relational Data Ingestion
+	- Create table in a RDS database
+	- Ingest data into the RDS table
 
-### 0. [Optional] Upload raw data to S3 bucket
+## 0. Build docker image for the pipeline
+Before completing any task in this section, you need to build the image first.
+```bash
+docker build -f dockerfiles/Dockerfile -t final-project .
+```
+
+or you can use the Makefile by typing
+```bash
+make image-model
+```
+
+## 1. Data Acquisition
 
 To build the image, run from this directory (the root of the repo): 
 ```bash
