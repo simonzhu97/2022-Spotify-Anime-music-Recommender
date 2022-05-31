@@ -26,7 +26,7 @@ Despite rapid growth of overseas exports, stigmas about anime still linger. Take
 ## Mission
 The project aims to provide a music recommender application where the app would recommend anime songs similar to the one the user inputs. The recommended songs would be pulled from a [dataset](https://www.kaggle.com/datasets/simonzhu97/popular-spotify-anime-songs) that includes recent hit anime songs on Spotify. 
 
-The application will have a pretrained clustering model where similar anime songs in the list are grouped into several clusters. In a text input field, the user will input a song they like and the app will search for this song on Spotify, extract the corresponding song features, compare them to the centroids of clusters of songs yielded by the pretrained model, find the closest cluster, and recommend the top 5 similar anime songs in that cluster based on a cosine similarity measure. For example, if the user inputs __"City of Stars"__, the app might output the following table, where each row represents a recommended song. 
+The application will have a pretrained clustering model where anime songs in the list are grouped into several clusters. In a text input field, the user will input a song they like and the app will search for this song on Spotify, extract the corresponding song features, compare them to the centroids of clusters of songs yielded by the pretrained model, find the closest cluster, and recommend the top similar anime songs in that cluster based on a cosine similarity measure. For example, if the user inputs __"City of Stars"__, the app might output the following table, where each row represents a recommended song. 
 
 |      | song name  | genre | link                                     |
 | ---: | :--------- | :---- | :--------------------------------------- |
@@ -38,7 +38,7 @@ The table above could be altered as the project proceeds. For instance, other so
 ## Success Criteria
 
 ### Model performance metric
-A test dataset would be created where 10 random pop songs would be chosen. Then, for each of these 10 songs, the top 5 anime songs that are most similar are hand-picked by knowledgeable people. An example test dataset is as follows.
+A test dataset would be created where 10 random pop songs would be chosen. Then, for each of these 10 songs, the top 30% anime songs that are most similar are hand-picked by knowledgeable people. An example test dataset is as follows.
 
 |      | song name  | Similar to the input song "Levitating"|
 | ---: | :--------- | :---- |
@@ -55,7 +55,7 @@ Prior to deployment, the recommendation system would be tested on this dataset a
 ### Business metric 
 Since the application aims to destigmatize anime and exhibits the diversity of anime music to users, the metric would be how well the recommended music is perceived by the users. After each recommendation, the app would collect users' feedbacks (ratings out of 5, with 5 being most satisfied) on the recommended music. If the average ratings are high, then the diversity of anime music is well-delivered to the users and the goal of the project is met.
 
-## Directory structure 
+# Directory structure 
 
 <details>
   <summary>Click to expand!</summary>
@@ -109,10 +109,33 @@ Since the application aims to destigmatize anime and exhibits the diversity of a
 
 </details>
 
+---
+# Running the whole pipeline 
 
-## Running the app 
+The whole pipeline contains the following steps:
+* Data Acquisition
+* Model Pipeline
+	- Data cleaning and preprocessing
+	- Feature generation
+	- Model training
+	- Model scoring/prediction
+	- Model evaluation
+* Relational Data Ingestion
+	- Create table in a RDS database
+	- Ingest data into the RDS table
 
-### 0. [Optional] Upload raw data to S3 bucket
+## 0. Build docker image for the pipeline
+Before completing any task in this section, you need to build the image first.
+```bash
+docker build -f dockerfiles/Dockerfile -t final-project .
+```
+
+or you can use the Makefile by typing
+```bash
+make image-model
+```
+
+## 1. Data Acquisition
 
 To build the image, run from this directory (the root of the repo): 
 ```bash

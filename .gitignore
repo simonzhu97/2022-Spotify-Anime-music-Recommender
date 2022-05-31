@@ -6,11 +6,13 @@ __pycache__/
 .idea/
 .log
 .ipynb_checkpoints/
+evaluate.ipynb
 
 
 data/*
 !data/sample/
 !data/external/
 !data/raw/
+!data/final/
 config/local/*
 !.gitkeep

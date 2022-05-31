@@ -20,9 +20,9 @@ def parse_s3(s3path: str) -> tuple[str, str]:
     # pattern of a regular s3 path
     regex = r"s3://([\w._-]+)/([\w./_-]+)"
 
-    m = re.match(regex, s3path)
-    s3bucket = m.group(1)
-    s3path = m.group(2)
+    matches = re.match(regex, s3path)
+    s3bucket = matches.group(1)
+    s3path = matches.group(2)
 
     return s3bucket, s3path
 
@@ -58,11 +58,11 @@ def download_file_from_s3(local_path: str, s3path: str) -> None:
         local_path -- the local path to store the file
         s3path -- the path on s3 where the file is stored
     """
-    
+
     s3bucket, s3_just_path = parse_s3(s3path)
 
-    s3 = boto3.resource("s3")
-    bucket = s3.Bucket(s3bucket)
+    s3_session = boto3.resource("s3")
+    bucket = s3_session.Bucket(s3bucket)
 
     try:
         bucket.download_file(s3_just_path, local_path)

@@ -7,7 +7,7 @@ import logging
 
 import sqlalchemy.exc
 
-import src.add_songs as songs
+import src.song_manager as songs
 from config.flaskconfig import SQLALCHEMY_DATABASE_URI
 
 logging.config.fileConfig("config/logging/local.conf")
