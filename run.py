@@ -28,7 +28,8 @@ if __name__ == '__main__':
     parser.add_argument('--config', default='config/model.yaml', help='Path to configuration file')
     parser.add_argument('--model_output','-mo', default=None, help='Path to save the generated model')
     parser.add_argument('--file_output', '-o', default=None, help='Path to save output CSV or images (optional, default = None)')
-    parser.add_argument('--mid_output', default=None, help='Specifical to the cleaning step to save the downloaded file from s3')
+    parser.add_argument('--mid_output', default=None, help='Specifical to the cleaning step to save the downloaded file from s3'
+                        'and also the scoring step to store centroids information')
 
     args = parser.parse_args()
     
@@ -68,9 +69,10 @@ if __name__ == '__main__':
         file_out = featurize(file_in, **config['preprocessing']['featurize'])
     elif args.step == 'train':
         model_d_out, model_l_out = get_models_dict(file_in, **config['model']['get_models_dict'])
-        file_out = plot_models_performance(file_in, model_l_out, **config['model']['plot_models_performance'])
+        file_out = assign_labels(file_in,model_l_out)
     elif args.step == 'score':
         file_out = assign_labels(file_in, model_in)
+        another_file_out = get_centroids()
     else:
         pass
     
