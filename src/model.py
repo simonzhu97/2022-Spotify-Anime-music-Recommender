@@ -46,36 +46,26 @@ def get_train_data(df: pd.DataFrame, cols:list[str]) -> pd.DataFrame:
                      df_in.columns)
     return df_in
 
-def get_models_dict(df:pd.DataFrame, cols:list[str],
-                    k_range:list[int],
-                    seed=42, return_list=False)->tuple[dict,Optional[list]]:
-    """run several K-means models with different number of clusters K on a dataframe
+def get_model(df:pd.DataFrame, cols:list[str],
+              k:int,
+              seed=42)->BaseEstimator:
+    """run a K-means model on a dataframe
 
     Arguments:
         df -- dataframe to work on
         cols -- features to include in the K-Means algorithm
-        k_range -- range of number of clusters to try
+        k -- number of clusters
 
     Keyword Arguments:
         seed -- random state seed (default: {42})
-        return_list -- whether to also return a list of models (default: {False})
 
     Returns:
-        If return_list = True, will return both a dictionary and a list of different KMeans models
-        If return_list = False, will only return a dictionary of different KMeans models
+        a KMeans models
     """
     df_in = get_train_data(df, cols)
-    model_dict = {}
-    # create different KMeans models
-    for k in k_range:
-        mod = KMeans(n_clusters=k, random_state=seed).fit(df_in)
-        model_dict[str(k)] = mod
-    res = model_dict
-
-    if return_list:
-        ls_mods = list(model_dict.values())
-        res = (model_dict, ls_mods)
-    return res
+    # create a KMeans models
+    mod = KMeans(n_clusters=k, random_state=seed).fit(df_in)
+    return mod
 
 def plot_models_performance(df:pd.DataFrame,
                             mod_list:list[BaseEstimator],
@@ -116,27 +106,18 @@ def plot_models_performance(df:pd.DataFrame,
         axs[idx].set_ylabel(name)
     return fig
 
-def save_model(model_dict: dict, best_num: str, output_path: str) -> BaseEstimator:
-    """A helper function that saves the dict of models to a path
+def save_model(model: BaseEstimator, output_path: str) -> None:
+    """A helper function that saves a model to a path
 
     Arguments:
-        model_dict -- A dictionary of KMeans models (num_of_cluster: MODEL)
-        best_num -- the optimal number of cluster
+        model -- Any model or sclaer class
         output_path -- the path to store the best model
-        
-    Returns:
-        the best model
+
     """
-    # ensure that the best_num is string
-    if isinstance(best_num,int):
-        best_num = str(best_num)
     try:
-        joblib.dump(model_dict[best_num], output_path)
+        joblib.dump(model, output_path)
         logger.info('The model is saved to %s', output_path)
-        return model_dict[best_num]
     except FileNotFoundError as err:
         logger.error("Path does not exist at %s", output_path)
         raise err
-    except KeyError as err:
-        logger.error("Model with the given best_num %s has not been built yet!", best_num)
-        raise err
+

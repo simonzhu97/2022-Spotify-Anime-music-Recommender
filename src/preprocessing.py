@@ -81,7 +81,7 @@ def clean(df_in: pd.DataFrame, col_mapper: dict, features: list[str]) -> pd.Data
     return df_new
 
 
-def featurize(df_in: pd.DataFrame, features: list[str]) -> pd.DataFrame:
+def featurize(df_in: pd.DataFrame, features: list[str]) -> tuple[pd.DataFrame,StandardScaler]:
     """Generate features from the cleaned dataset
 
     Arguments:
@@ -90,6 +90,7 @@ def featurize(df_in: pd.DataFrame, features: list[str]) -> pd.DataFrame:
 
     Returns:
         a dataframe with scaled columns
+        the standard scaler used in this function
     """
     # check if features exist`
     if validate_features(df_in, features):
@@ -103,9 +104,10 @@ def featurize(df_in: pd.DataFrame, features: list[str]) -> pd.DataFrame:
     std_scale = StandardScaler()
     df_num = df_in.select_dtypes(include=np.number)
     df_rest = df_in.select_dtypes(exclude=np.number)
-    df_scale = pd.DataFrame(std_scale.fit_transform(df_num),
+    std_scale.fit(df_num)
+    df_scale = pd.DataFrame(std_scale.transform(df_num),
                             columns=df_num.columns)
     # combine numerical and non-numerical columns
     df_fin = pd.concat([df_scale, df_rest], axis=1)
 
-    return df_fin
+    return df_fin, std_scale

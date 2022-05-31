@@ -5,8 +5,8 @@ import logging.config
 import pandas as pd
 from src.s3 import download_file_from_s3, upload_file_to_s3
 from src.preprocessing import read_from_local, clean, featurize
-from src.model import get_models_dict, plot_models_performance, save_model
-from src.evaluate_model import assign_labels
+from src.model import get_model, save_model
+from src.evaluate_model import assign_labels, assign_new_labels, evaluate
 import joblib
 import yaml
 import os
@@ -28,8 +28,9 @@ if __name__ == '__main__':
     parser.add_argument('--config', default='config/model.yaml', help='Path to configuration file')
     parser.add_argument('--model_output','-mo', default=None, help='Path to save the generated model')
     parser.add_argument('--file_output', '-o', default=None, help='Path to save output CSV or images (optional, default = None)')
-    parser.add_argument('--mid_output', default=None, help='Specifical to the cleaning step to save the downloaded file from s3'
-                        'and also the scoring step to store centroids information')
+    parser.add_argument('--mid_output', default=None, help='Specifical to the cleaning step to save the downloaded file from s3')
+    parser.add_argument('--origin_data',default=None,help='specific for the train step, gives the cleaned unprocessed file')
+    parser.add_argument('--scalar',default=None,help='specific for the score step, gives the standard scalar used in featurize')
 
     args = parser.parse_args()
     
@@ -50,12 +51,26 @@ if __name__ == '__main__':
             except FileNotFoundError:
                 logger.error("Cannot find file at the specified input path %s", args.input)
     
+    if args.origin_data is not None:
+        try:
+            origin_data = pd.read_csv(args.origin_data)
+            logger.info('Input data loaded from %s', args.origin_data)
+        except FileNotFoundError:
+            logger.error("Cannot find file at the specified input path %s", args.origin_data)
+    
     if args.model is not None:
         try:
             model_in = joblib.load(args.model)
             logger.info('Input model loaded from %s', args.model)
         except FileNotFoundError:
             logger.error("Cannot find model at the specified path %s", args.model)
+    
+    if args.scalar is not None:
+        try:
+            scalar_in = joblib.load(args.scalar)
+            logger.info('Input scalar loaded from %s', args.scalar)
+        except FileNotFoundError:
+            logger.error("Cannot find scalar at the specified path %s", args.scalar)
             
     # taking actions based on step name
     if args.step == 'acquire':
@@ -66,29 +81,26 @@ if __name__ == '__main__':
         file_in = read_from_local(args.mid_output)
         file_out = clean(file_in, **config['preprocessing']['clean'])
     elif args.step == 'featurize':
-        file_out = featurize(file_in, **config['preprocessing']['featurize'])
+        file_out, model_out = featurize(file_in, **config['preprocessing']['featurize'])
     elif args.step == 'train':
-        model_d_out, model_l_out = get_models_dict(file_in, **config['model']['get_models_dict'])
-        file_out = assign_labels(file_in,model_l_out)
+        model_out = get_model(file_in, **config['model']['get_model'])
+        file_out = assign_labels(origin_data,model_out)
     elif args.step == 'score':
-        file_out = assign_labels(file_in, model_in)
-        another_file_out = get_centroids()
+        file_out = assign_new_labels(file_in, scalar_in, model_in, **config['evaluate_model']['assign_new_labels'])
     else:
-        pass
+        file_out = evaluate(file_in)
     
     # define the output files
     if args.file_output is not None:
         try:
-            if args.step not in ['acquire','train']:
+            if args.step not in ['acquire','evaluate']:
                 file_out.to_csv(args.file_output, index=False)
-            elif args.step == 'train':
-                #save a plot instead
-                logger.debug(type(file_out))
-                file_out.savefig(args.file_output)
+            if args.step =='evaluate':
+                with open(args.file_output,"w") as f:
+                    f.write(file_out)
             logger.info("Output saved to %s", args.file_output)
         except FileNotFoundError:
             logger.error("The specified output path at %s does not exist", args.file_output)
             
     if args.model_output is not None:
-        save_model(model_d_out,output_path=args.model_output,
-                   **config['model']['save_model'])
+        save_model(model_out,output_path=args.model_output)

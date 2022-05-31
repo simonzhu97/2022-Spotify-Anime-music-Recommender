@@ -10,7 +10,6 @@ search_songs:
       - liveness
       - valence
       - tempo
-    target: clusterId
 preprocessing:
   clean:
     col_mapper: {'name':'title', 'duration_ms':'duration', 'uri':'track_uri'}
@@ -44,7 +43,7 @@ preprocessing:
       - duration
       - track_uri
 model:
-  get_models_dict:
+  get_model:
     cols:
       - danceability
       - energy
@@ -55,10 +54,32 @@ model:
       - liveness
       - valence
       - tempo
-    k_range: [3,4,5,6,7,8,9,10]
+    k: 5
     seed: 42
-    return_list: True
-  plot_models_performance:
-    k_range: [3,4,5,6,7,8,9,10]
-  save_model:
-    best_num: "5"
+evaluate_model:
+  assign_new_labels:
+    features:
+      - danceability
+      - energy
+      - loudness
+      - speechiness
+      - acousticness
+      - instrumentalness
+      - liveness
+      - valence
+      - tempo
+    col_mapper: {'name':'title', 'duration_ms':'duration', 'uri':'track_uri'}
+    clean_features:
+      - danceability
+      - energy
+      - key
+      - loudness
+      - speechiness
+      - acousticness
+      - instrumentalness
+      - liveness
+      - valence
+      - tempo
+      - title
+      - duration
+      - track_uri

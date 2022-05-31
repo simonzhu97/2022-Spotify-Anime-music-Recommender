@@ -3,7 +3,7 @@ A configuration file containing configurations for the flask app
 """
 
 import os
-DEBUG = True
+DEBUG = False
 LOGGING_CONFIG = "config/logging/local.conf"
 PORT = 5000
 APP_NAME = "anime_song_recommender"
@@ -19,6 +19,4 @@ if SQLALCHEMY_DATABASE_URI is None:
 FEATURES = ['danceability', 'energy', 'loudness',
        'speechiness', 'acousticness', 'instrumentalness',
         'liveness','valence', 'tempo']
-TARGET = "clusterId"
 TOP_N = 10
-CENTROIDS_PATH =  "data/intermediate/centroids.csv"
