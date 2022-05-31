@@ -38,7 +38,7 @@ The table above could be altered as the project proceeds. For instance, other so
 ## Success Criteria
 
 ### Model performance metric
-A test dataset would be created where 10 random pop songs would be chosen. Then, for each of these 10 songs, the top 5 anime songs that are most similar are hand-picked by knowledgeable people. An example test dataset is as follows.
+A test dataset would be created where 10 random pop songs would be chosen. Then, for each of these 10 songs, the top 30% anime songs that are most similar are hand-picked by knowledgeable people. An example test dataset is as follows.
 
 |      | song name  | Similar to the input song "Levitating"|
 | ---: | :--------- | :---- |

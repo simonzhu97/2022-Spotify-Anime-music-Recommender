@@ -3,9 +3,11 @@ Assign each song a clusterId based on the optimal KMeans model
 Evaluate the KMeans model results
 """
 import pandas as pd
+import numpy as np
 import logging
 
 from sklearn.base import BaseEstimator
+from src.search_songs import get_closest_cluster, get_top_n_closest_song, valid_features
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,9 @@ def assign_labels(df_features:pd.DataFrame, model: BaseEstimator) -> pd.DataFram
     """
     df_new = pd.concat([df_features,pd.Series(model.labels_,name="clusterId")],axis=1)
     return df_new
-
-def evaluate():
-    # give a test set and see how the clustering algorithm works
+    
+    
+def evaluate(df_sample,):
+    # give a test set, calculate 
+    # precision @k
     pass

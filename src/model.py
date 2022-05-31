@@ -116,13 +116,16 @@ def plot_models_performance(df:pd.DataFrame,
         axs[idx].set_ylabel(name)
     return fig
 
-def save_model(model_dict: dict, best_num: str, output_path: str) -> None:
+def save_model(model_dict: dict, best_num: str, output_path: str) -> BaseEstimator:
     """A helper function that saves the dict of models to a path
 
     Arguments:
         model_dict -- A dictionary of KMeans models (num_of_cluster: MODEL)
         best_num -- the optimal number of cluster
         output_path -- the path to store the best model
+        
+    Returns:
+        the best model
     """
     # ensure that the best_num is string
     if isinstance(best_num,int):
@@ -130,6 +133,7 @@ def save_model(model_dict: dict, best_num: str, output_path: str) -> None:
     try:
         joblib.dump(model_dict[best_num], output_path)
         logger.info('The model is saved to %s', output_path)
+        return model_dict[best_num]
     except FileNotFoundError as err:
         logger.error("Path does not exist at %s", output_path)
         raise err

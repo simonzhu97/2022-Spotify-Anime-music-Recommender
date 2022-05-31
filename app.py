@@ -138,7 +138,8 @@ def get_entry():
         
         # find the closest ones in terms of cosine_similarity
         top_songs = get_top_n_closest_song(
-            song_features, songs, app.config['FEATURES'], app.config['TARGET'], app.config['TOP_N'])
+            song_features, songs, app.config['FEATURES'], app.config['TARGET'], app.config['TOP_N'],
+            cluster_id=cluster_id)
         
         return render_template('search_results.html',
                                searched=f"{song_name} by {artist}",

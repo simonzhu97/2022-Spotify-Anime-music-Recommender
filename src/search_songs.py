@@ -1,11 +1,12 @@
 """ 
-Thhe module contains methods that 
+Thhe module contains methods that
     1. searches for a song's features by calling Spotify's API
     2. returns the cluster of which the centroid is closest to the song in terms of cosine similarity
     3. returns the top N closest (in terms of cosine similarity) songs to a given song in a given cluster
 """
 import logging
 import os
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -114,7 +115,7 @@ def valid_features(sub_features:list[str],all_features:list[str])->bool:
 
     Returns:
         a boolean indicating whether the sub_features are all valid
-    
+
     Raises:
         KeyError
     """
@@ -129,48 +130,54 @@ def valid_features(sub_features:list[str],all_features:list[str])->bool:
 def get_closest_cluster(df_song:pd.DataFrame,
                         centroids:pd.DataFrame,
                         features:list[str],
-                        target: str)->int:
+                        target: str)->Union[list[int],int]:
     """Based on the selected features, choose the clusters with a centroid closest to the song provided.
 
     Arguments:
-        df_song -- one row of song features
+        df_song -- dataframe of songs including their features
         centroids -- the datafram containing info about centroids
         features -- the features to use when calculating distance
         target -- the column name for cluster id
 
     Returns:
-        the closest clusterId
+        if df_song contains only one song, returns the closest clusterId
+        if df_song contains many songs, returns the closest cluserId to each song in a list
     """
     if not (valid_features(features,df_song.columns) and valid_features(features,centroids.columns)):
         logger.error("The features selected is not an available song feature!")
         raise KeyError("Nonexisting feature")
-  
+
     # check if the target provided exist
     if not (valid_features(target, centroids.columns)):
         logger.error("The target column provided does not exist.")
         raise KeyError("Nonexisting target column")
-    
+
     # calculate distance between the song and each cluster
     dist = cosine_similarity(df_song[features],centroids[features])
     logger.debug(dist)
-    # return the cluster with the closest centroid
-    return int(centroids.loc[np.argmax(dist,axis=-1),"clusterId"])
+
+    # if only one song, return the cluster with the closest centroid
+    if df_song.shape[0]==1:
+        return int(centroids.loc[np.argmax(dist,axis=-1),target])
+    else:
+        return centroids.loc[np.argmax(dist,axis=-1),target].to_list()
 
 def get_top_n_closest_song(df_song: pd.DataFrame, df_anime: pd.DataFrame,
-                           features:list[str], target: str, top_n: int) -> list[dict]:
+                           features:list[str], target: str, top_n: int,
+                           cluster_id:int) -> list[dict]:
     """Select the top N closest song to the given song
 
     Arguments:
-        df_song -- A dataframe containing the features of the song (one row)
+        df_song -- A dataframe containing the features of one song
         df_anime -- A dataframe containing all possible anime songs with cluster ids
         features -- A list of features to compute distance on
         target -- The column name standing for cluster id
-        N -- number of songs to find
+        top_n -- number of songs to find
+        cluster_id -- the cluster to look into
 
     Returns:
-        a dataframe containing information about the found closest songs
+        a list of records containing info about the found closest songs
     """
-    
     if not (valid_features(features,df_song.columns) and valid_features(features,df_anime.columns)):
         logger.error("The features selected is not an available song feature!")
         raise KeyError("Nonexisting feature")
@@ -178,7 +185,9 @@ def get_top_n_closest_song(df_song: pd.DataFrame, df_anime: pd.DataFrame,
     if not (valid_features(target, df_anime.columns)):
         logger.error("The target column provided does not exist.")
         raise KeyError("Nonexisting target column")
-
+    # select the rows that correspond to the given cluster id
+    df_anime = df_anime[df_anime[target]==cluster_id].reset_index(drop=True)
     dist = cosine_similarity(df_song[features], df_anime[features])
     inds = np.argpartition(dist,-top_n,axis=-1)
+
     return df_anime.loc[inds[0][-top_n:]].to_dict('records')
