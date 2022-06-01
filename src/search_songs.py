@@ -10,20 +10,36 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-import spotipy
+import spotipy # type: ignore
 from sklearn.metrics.pairwise import cosine_similarity
-from spotipy.oauth2 import SpotifyClientCredentials
+from spotipy.oauth2 import SpotifyClientCredentials # type: ignore
 
 logger = logging.getLogger(__name__)
 
-CID = os.getenv("SPOTIPY_CLIENT_ID")
-SECRET = os.getenv("SPOTIPY_CLIENT_SECRET")
 
-# establish a spotify api service
 
-client_credentials_manager = SpotifyClientCredentials(
-    client_id=CID, client_secret=SECRET)
-sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+def establish_api() -> spotipy.client.Spotify:
+    """Establish an Spotify API client
+
+    Returns: an spotify api agent
+
+    """
+    CID = os.getenv("SPOTIPY_CLIENT_ID")
+    SECRET = os.getenv("SPOTIPY_CLIENT_SECRET")
+
+    # establish a spotify api service
+
+    client_credentials_manager = SpotifyClientCredentials(
+        client_id=CID, client_secret=SECRET)
+    
+    try:
+        sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+    except spotipy.oauth2.SpotifyOauthError as err:
+        logger.error(
+            "The configured client id and secret does not match. Please check them again!")
+        raise err
+    return sp
+    
 
 def search_on_spotify(query: str) -> dict:
     """A helper function that searches on Spotify with a given query
@@ -35,6 +51,7 @@ def search_on_spotify(query: str) -> dict:
         a dictionary containing search results
     """
     try:
+        sp = establish_api()
         search_results = sp.search(query, limit=1, offset=0, type="track")
         logger.info("The song %s has been searched", query)
     except spotipy.oauth2.SpotifyOauthError as err:
@@ -69,8 +86,7 @@ def form_query(song_name: str, artist_name: str) -> str:
         logger.error("Please provide at least one field. Song name or artist name.")
         raise KeyError("Fields missing")
     return song_to_search
-    
-    
+
 def get_song_features(song_name: str, artist_name: str) -> pd.DataFrame:
     """Get the features for a song. If the search returns nothing,
     then returns an empty dataframe.
@@ -86,6 +102,7 @@ def get_song_features(song_name: str, artist_name: str) -> pd.DataFrame:
         spotipy.exceptions.SpotifyException
         KeyError
     """
+    sp = establish_api()
     # form the query
     song_to_search = form_query(song_name,artist_name)
 

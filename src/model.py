@@ -120,4 +120,3 @@ def save_model(model: BaseEstimator, output_path: str) -> None:
     except FileNotFoundError as err:
         logger.error("Path does not exist at %s", output_path)
         raise err
-

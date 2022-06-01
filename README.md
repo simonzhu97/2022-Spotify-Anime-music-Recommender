@@ -26,7 +26,7 @@ Despite rapid growth of overseas exports, stigmas about anime still linger. Take
 ## Mission
 The project aims to provide a music recommender application where the app would recommend anime songs similar to the one the user inputs. The recommended songs would be pulled from a [dataset](https://www.kaggle.com/datasets/simonzhu97/popular-spotify-anime-songs) that includes recent hit anime songs on Spotify. 
 
-The application will have a pretrained clustering model where anime songs in the list are grouped into several clusters. In a text input field, the user will input a song they like and the app will search for this song on Spotify, extract the corresponding song features, compare them to the centroids of clusters of songs yielded by the pretrained model, find the closest cluster, and recommend the top similar anime songs in that cluster based on a cosine similarity measure. For example, if the user inputs __"City of Stars"__, the app might output the following table, where each row represents a recommended song. 
+The application will have a pretrained clustering model where anime songs in the list are grouped into several clusters. In a text input field, the user will input a song and the artist name they like and the app will search for this song on Spotify, extract the corresponding song features, compare them to the centroids of clusters of songs yielded by the pretrained model, find the closest cluster, and recommend the top similar anime songs in that cluster based on a cosine similarity measure. For example, if the user inputs __"City of Stars"__, the app might output the following table, where each row represents a recommended song. 
 
 |      | song name  | genre | link                                     |
 | ---: | :--------- | :---- | :--------------------------------------- |
@@ -38,19 +38,17 @@ The table above could be altered as the project proceeds. For instance, other so
 ## Success Criteria
 
 ### Model performance metric
-A test dataset would be created where 10 random pop songs would be chosen. Then, for each of these 10 songs, the top 30% anime songs that are most similar are hand-picked by knowledgeable people. An example test dataset is as follows.
+A sample test dataset would be created where five random pop songs would be chosen. Then, for each of these five songs, song features are offered via Spotify's API. An example test dataset is as follows.
 
-|      | song name  | Similar to the input song "Levitating"|
-| ---: | :--------- | :---- |
-|    1 | One Last Kiss | F | 
-|    2 | Lost in Paradise | T |
-|    3 | Black Catcher | T |
-|    ... | ... | ... |
-|    439 | Blue Sky | F |
+|      | title  | danceability |energy|...|time_signature|
+| ---: | :--------- | :---- |:---|:---|:---|
+|    1 | One Last Kiss |0.9| 0.3|...|4|
+|    2 | Lost in Paradise | 0.8| 0.1|...|3|
+|    3 | Black Catcher | 0.1| 0.2|...|4|
+|    ... | ... | ...| ...|...|...|
+|    439 | Blue Sky |0.5| 0.8|...|2|
 
-The table above includes only 5 rows where "Similar to the input song "Levitating""==True.
-
-Prior to deployment, the recommendation system would be tested on this dataset and the performance metric would be the precision@k. That is, among the top k songs that the model recommends, how many of them are labeled as "similar to the input song"? Currently, the threshold for publishing is set at __precision@5 = 0.4__. That is, at least two （40%） of the five songs that the model recommends are labeled as "similar to the input song" in the test dataset. However, this threshold could be further altered according to circumstances.
+Prior to deployment, the recommendation system would be tested on this dataset. The KMeans model yielded from training will be applied here to assign each song to its closest cluster. The performance metric would then be the silhouette score, which ranges between -1 and 1. That is, how well clusters are apart from each other and clearly distinguished. Currently, the threshold for publishing is set at __silhouette score > 0.2__. That is, the clusters to which the test set songs are assigned have some overlapping but are overall distinct. However, this threshold could be further altered according to circumstances.
 
 ### Business metric 
 Since the application aims to destigmatize anime and exhibits the diversity of anime music to users, the metric would be how well the recommended music is perceived by the users. After each recommendation, the app would collect users' feedbacks (ratings out of 5, with 5 being most satisfied) on the recommended music. If the average ratings are high, then the diversity of anime music is well-delivered to the users and the goal of the project is met.
