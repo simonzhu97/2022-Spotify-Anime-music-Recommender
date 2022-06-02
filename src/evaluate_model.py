@@ -3,7 +3,6 @@ Assign each song a clusterId based on the optimal KMeans model
 Evaluate the KMeans model results
 """
 import logging
-from numpy import isin
 
 import pandas as pd
 from sklearn.base import BaseEstimator
@@ -32,9 +31,9 @@ def summary_kmeans(model: BaseEstimator) -> pd.DataFrame:
         return pd.DataFrame([])
     cols = model.feature_names_in_.tolist()
     df_clusters = pd.DataFrame(model.cluster_centers_, columns=cols)
-    df_clusters['count'] = pd.Series(model.labels_).value_counts().sort_index()
-    df_clusters['percent'] = df_clusters['count']/df_clusters['count'].sum()
-    columns_ordered = ['count', 'percent'] + cols
+    df_clusters["count"] = pd.Series(model.labels_).value_counts().sort_index()
+    df_clusters["percent"] = df_clusters["count"]/df_clusters["count"].sum()
+    columns_ordered = ["count", "percent"] + cols
     df_clusters = df_clusters[columns_ordered]
     return df_clusters
 
@@ -112,12 +111,13 @@ def evaluate(df_sample: pd.DataFrame) -> str:
     Returns:
         the silhouette score of the clustered results
     """
-    if not isinstance(df_sample,pd.DataFrame):
+    if not isinstance(df_sample, pd.DataFrame):
         logger.error("The argument needs to be a dataframe"
                      "but you have %s", type(df_sample))
         raise TypeError("Not dataframe input!")
     if "clusterId" not in df_sample.columns:
-        logger.error("Needs to have a clusterId label column in your dataframe")
+        logger.error(
+            "Needs to have a clusterId label column in your dataframe")
         raise KeyError("No clusterId column")
     score = silhouette_score(df_sample.drop(
         "clusterId", axis=1), df_sample["clusterId"])

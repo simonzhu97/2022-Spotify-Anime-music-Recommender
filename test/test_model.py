@@ -5,8 +5,9 @@ get_model
 
 import pandas as pd
 import pytest
-import src.model as mod
 from sklearn.cluster import KMeans
+
+import src.model as mod
 
 # Define expected input dataframe
 df_in_values = [[0, 0.627, 0.824, 1, -3.419, 1, 0.118, 0.0699, 6.57e-05, 0.31, 0.774, 169.935, "audio_features",
@@ -51,14 +52,16 @@ def test_get_train_data_not_df():
     with pytest.raises(TypeError):
         mod.get_train_data(nonexist_in, feature_columns)
 
+
 def test_get_model():
     """Unit test - happy path - get_model()
     """
-    #model
-    feature_columns = ['danceability']
-    fit = mod.get_model(df_in,feature_columns,2,42)
+    # model
+    feature_columns = ["danceability"]
+    fit = mod.get_model(df_in, feature_columns, 2, 42)
 
     assert isinstance(fit, KMeans)
+
 
 def test_get_model_not_valid_data():
     """Unit test - unhappy path - get_model()
@@ -68,5 +71,4 @@ def test_get_model_not_valid_data():
     feature_columns = ["danceability"]
 
     with pytest.raises(TypeError):
-        mod.get_model(nonexist_in, feature_columns,2,42)
-    
+        mod.get_model(nonexist_in, feature_columns, 2, 42)

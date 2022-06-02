@@ -35,8 +35,8 @@ def test_evaluate_not_df():
     """Unit test - unhappy path - evaluate()
     """
     df_bad = pd.DataFrame([[0.627, 1],
-                [0.585, 1],
-                [0.561, 0]],columns=['danceability','label'])
+                           [0.585, 1],
+                           [0.561, 0]], columns=["danceability", "label"])
 
     with pytest.raises(KeyError):
         evaluate(df_bad)

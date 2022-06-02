@@ -7,6 +7,8 @@ __pycache__/
 .log
 .ipynb_checkpoints/
 evaluate.ipynb
+.pylintrc
+.cache
 
 
 data/*
