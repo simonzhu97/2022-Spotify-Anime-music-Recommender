@@ -371,8 +371,8 @@ Before you run the Flask app, you would need your spotify api credentials,
 you can find these credentials in [this website](https://developer.spotify.com/dashboard/applications) as long as you have a Spotify account.
 All you need to do is to create an application, and then copy & paste the client IDs and the Secret.
 
-<img src="https://github.com/MSIA/2022-msia423-Zhu-Simon-project/blob/main/figures/spotify_1.png" alt="drawing" height="300" width="1000"/>
-<img src="https://github.com/MSIA/2022-msia423-Zhu-Simon-project/blob/main/figures/spotify_2.png" alt="drawing" height="300" width="1000"/>
+<img src="https://github.com/MSIA/2022-msia423-Zhu-Simon-project/blob/main/figures/spotify_1.png" alt="drawing" height="200" width="1000"/>
+<img src="https://github.com/MSIA/2022-msia423-Zhu-Simon-project/blob/main/figures/spotify_2.png" alt="drawing" height="200" width="1000"/>
 
 Now export these variables into your current shell.
 
