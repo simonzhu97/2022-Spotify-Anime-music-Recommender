@@ -60,18 +60,22 @@ Since the application aims to destigmatize anime and exhibits the diversity of a
 
 ```
 ├── README.md                         <- You are here
-├── api
+├── app
 │   ├── static/                       <- CSS, JS files that remain static
 │   ├── templates/                    <- HTML (or other code) that is templated and changes based on a set of inputs│    
 │
 ├── config                            <- Directory for configuration files 
 │   ├── local/                        <- Directory for keeping environment variables and other local configurations that *do not sync** to Github 
 │   ├── logging/                      <- Configuration of python loggers
-│   ├── flaskconfig.py                <- Configurations for Flask API 
+│   ├── flaskconfig.py                <- Configurations for Flask API
+│   ├── model.yaml                	  <- Configurations for the model pipeline
 │
-├── data                              <- Folder that contains data used or generated. Only the external/ and sample/ subdirectories are tracked by git. 
-│   ├── external/                     <- External data sources, usually reference data,  will be synced with git
+├── data                              <- Folder that contains data used or generated. Only the external/ sample/ and raw/ subdirectories are tracked by git. 
+│   ├── external/                     <- External data sources, usually reference data, will be synced with git
 │   ├── sample/                       <- Sample data used for code development and testing, will be synced with git
+│   ├── raw/                      	  <- Raw data downloaded from Kaggle
+│   ├── final/                        <- The final results of the model pipeline
+│   ├── intermediate/                 <- The artifacts generated throughout the model pipeline
 │
 ├── deliverables/                     <- Any white papers, presentations, final work products that are presented or delivered to a stakeholder 
 │
@@ -79,36 +83,34 @@ Since the application aims to destigmatize anime and exhibits the diversity of a
 |
 ├── dockerfiles/                      <- Directory for all project-related Dockerfiles 
 │   ├── Dockerfile.app                <- Dockerfile for building image to run web app
-│   ├── Dockerfile.run                <- Dockerfile for building image to execute run.py  
+│   ├── Dockerfile                    <- Dockerfile for building image to run the data acquisition, model pipeline and relational data ingestion
 │   ├── Dockerfile.test               <- Dockerfile for building image to run unit tests
-|	├── Dockerfile.s3                 <- Dockerfile for building image to run s3 related operations
-|	├── Dockerfile.rds                <- Dockerfile for building image to run rds related operations
 │
 ├── figures/                          <- Generated graphics and figures to be used in reporting, documentation, etc
 │
-├── models/                           <- Trained model objects (TMOs), model predictions, and/or model summaries
+├── models/                           <- Trained model objects (TMOs), model predictions, and model summaries
 │
 ├── notebooks/
 │   ├── archive/                      <- Develop notebooks no longer being used.
 │   ├── deliver/                      <- Notebooks shared with others / in final state
 │   ├── develop/                      <- Current notebooks being used in development.
-│   ├── template.ipynb                <- Template notebook for analysis with useful imports, helper functions, and SQLAlchemy setup. 
 │
 ├── reference/                        <- Any reference material relevant to the project
 │
-├── src/                              <- Source data for the project. No executable Python files should live in this folder.  
+├── src/                              <- Source data for the project.
 │
 ├── test/                             <- Files necessary for running model tests (see documentation below) 
 │
 ├── app.py                            <- Flask wrapper for running the web app 
-├── run.py                            <- Simplifies the execution of one or more of the src scripts  
+├── run.py                            <- Simplifies the execution of one or more of the src scripts regarding data acquisition and model pipeline
+├── run_rds.py                        <- Simplifies the execution of the src scripts regarding relational data ingestion  
 ├── requirements.txt                  <- Python package dependencies 
 ```
 
 </details>
 
 ---
-# Running the whole pipeline 
+# Running the whole pipeline aside from unit tests and web app
 
 The whole pipeline contains the following steps:
 * Data Acquisition
@@ -132,80 +134,202 @@ or you can use the Makefile by typing
 ```bash
 make image-model
 ```
+__Note: All the following commands should be run from this directory (the root of the repo)__
 
 ## 1. Data Acquisition
 
-To build the image, run from this directory (the root of the repo): 
-```bash
-docker build -t s3 -f dockerfiles/Dockerfile.s3 .
-```
-
-To upload the raw data from your local path to the S3 bucket, you need to first provide AWS credentials in your current shell.
+To upload the raw data from your local path to the S3 bucket, you need to first provide AWS credentials, and also the S3 bukcet url in your current shell.
 ```bash
 export AWS_ACCESS_KEY_ID = ...
 export AWS_SECRET_ACCESS_KEY = ...
+export S3_BUCKET = ...
 ```
 
 Then, you can run the following code in the terminal to upload the data.
 ```bash
-docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY --rm s3\
-upload\
---s3path={your_s3_path}}\
---local_path={path_to_your_local_data}
+docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
+-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e S3_BUCKET \
+final-project run.py acquire --input=data/raw/anime_songs.csv
 ```
 
-### 1. Acquire raw data from the S3 bucket.
-
-
-### 1. Initialize the database 
-#### Build the image 
-
-To build the image, run from this directory (the root of the repo): 
+or equivalently,
 
 ```bash
- docker build -f dockerfiles/Dockerfile.run -t pennylanedb .
+make s3-upload
 ```
-#### Create the database 
-To create the database in the location configured in `config.py` run: 
+
+---
+## 2. Model Pipeline
+As mentioned above, there are five steps involved in this section.
+
+If you want to run the whole pipeline with one command, do 
+```bash
+make model-all
+```
+
+The docker commands or make commands to run these steps individually are as follows.
+
+### 2.1 Data cleaning and preprocessing
+
+<details>
+  <summary>Click to expand!</summary>
 
 ```bash
-docker run --mount type=bind,source="$(pwd)"/data,target=/app/data/ pennylanedb create_db  --engine_string=sqlite:///data/tracks.db
+docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
+-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e S3_BUCKET \
+final-project run.py clean \
+--file_output=data/intermediate/cleaned.csv --config=config/model.yaml \
+--mid_output=data/raw/downloaded.csv
 ```
-The `--mount` argument allows the app to access your local `data/` folder and save the SQLite database there so it is available after the Docker container finishes.
 
+or equivalently,
 
-#### Adding songs 
+```bash
+make cleaned
+```
+
+</details>
+
+### 2.2 Feature generation
+
+<details>
+  <summary>Click to expand!</summary>
+
+```bash
+docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
+final-project run.py featurize --file_output=data/intermediate/features.csv \
+--input=data/intermediate/cleaned.csv --config=config/model.yaml \
+--model_output=models/scalar.joblib
+```
+
+or equivalently,
+
+```bash
+make features
+```
+
+</details>
+
+### 2.3 Model training
+
+<details>
+  <summary>Click to expand!</summary>
+
+```bash
+docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
+final-project run.py train --file_output=data/final/anime_clusters.csv \
+--model_output=models/kmeans.joblib \
+--input=data/intermediate/features.csv --config=config/model.yaml --origin_data=data/intermediate/cleaned.csv
+```
+
+or equivalently,
+
+```bash
+make models
+```
+
+</details>
+
+### 2.4 Model scoring/prediction
+
+<details>
+  <summary>Click to expand!</summary>
+
+```bash
+docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
+final-project run.py score --file_output=models/sample_clusters.csv --model=models/kmeans.joblib \
+--input=data/sample/sample_search_songs.csv --scalar=models/scalar.joblib
+```
+
+or equivalently,
+
+```bash
+make scores
+```
+
+</details>
+
+### 2.5 Model evaluation
+
+<details>
+  <summary>Click to expand!</summary>
+
+```bash
+docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
+final-project run.py evaluate --file_output=models/sample_eval.txt \
+--input=models/sample_clusters.csv
+```
+
+or equivalently,
+
+```bash
+make evaluate
+```
+
+</details>
+
+---
+## 3. Relational Data Ingestion
+
+In order to take actions on the RDS instance on AWS, you would need to first provide AWS credentials, and also the SQLAlchemy database string in your current shell.
+The SQLAlchemy database string could take the following formats:
+
+`{dialect}://{user}:{pasword}>@{host}:{port}/{database}`
+
+or
+
+`sqlite:///data/{databasename}.db`
+
+```bash
+export AWS_ACCESS_KEY_ID = ...
+export AWS_SECRET_ACCESS_KEY = ...
+export SQLALCHEMY_DATABASE_URI = ...
+```
+
+#### 3.1 Create table in a RDS database
+
+<details>
+  <summary>Click to expand!</summary>
+
+To create the database in the location offered in the environment variable, run: 
+
+```bash
+docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
+-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e SQLALCHEMY_DATABASE_URI \
+final-project run_rds.py create
+```
+
+or 
+
+```bash
+make rds-create
+```
+
+</details>
+
+#### 3.2 Ingest data into the RDS table
+
+<details>
+  <summary>Click to expand!</summary>
+
 To add songs to the database:
 
 ```bash
-docker run --mount type=bind,source="$(pwd)"/data,target=/app/data/ pennylanedb ingest --engine_string=sqlite:///data/tracks.db --artist=Emancipator --title="Minor Cause" --album="Dusk to Dawn"
+docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
+-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e SQLALCHEMY_DATABASE_URI \
+final-project run_rds.py add_data \
+--data_path=data/final/anime_clusters.csv
 ```
 
-#### Defining your engine string 
-A SQLAlchemy database connection is defined by a string with the following format:
+or
 
-`dialect+driver://username:password@host:port/database`
-
-The `+dialect` is optional and if not provided, a default is used. For a more detailed description of what `dialect` and `driver` are and how a connection is made, you can see the documentation [here](https://docs.sqlalchemy.org/en/13/core/engines.html). We will cover SQLAlchemy and connection strings in the SQLAlchemy lab session on 
-##### Local SQLite database 
-
-A local SQLite database can be created for development and local testing. It does not require a username or password and replaces the host and port with the path to the database file: 
-
-```python
-engine_string='sqlite:///data/tracks.db'
-
+```bash
+make rds-ingest
 ```
 
-The three `///` denote that it is a relative path to where the code is being run (which is from the root of this directory).
+</details>
 
-You can also define the absolute path with four `////`, for example:
-
-```python
-engine_string = 'sqlite://///Users/cmawer/Repos/2022-msia423-template-repository/data/tracks.db'
-```
-
-
-### 2. Configure Flask app 
+# Running the web app
 
 `config/flaskconfig.py` holds the configurations for the Flask app. It includes the following configurations:
 
@@ -214,33 +338,63 @@ DEBUG = True  # Keep True for debugging, change to False when moving to producti
 LOGGING_CONFIG = "config/logging/local.conf"  # Path to file that configures Python logger
 HOST = "0.0.0.0" # the host that is running the app. 0.0.0.0 when running locally 
 PORT = 5000  # What port to expose app on. Must be the same as the port exposed in dockerfiles/Dockerfile.app 
-SQLALCHEMY_DATABASE_URI = 'sqlite:///data/tracks.db'  # URI (engine string) for database that contains tracks
-APP_NAME = "penny-lane"
+APP_NAME = "anime_song_recommender"
 SQLALCHEMY_TRACK_MODIFICATIONS = True 
 SQLALCHEMY_ECHO = False  # If true, SQL for queries made will be printed
-MAX_ROWS_SHOW = 100 # Limits the number of rows returned from the database 
+MAX_ROWS_SHOW = 10 # Limits the number of rows returned from the database 
+FEATURES = ['danceability', 'energy', 'loudness',
+       'speechiness', 'acousticness', 'instrumentalness',
+        'liveness','valence', 'tempo'] # FEATURES USED WHEN FINDING THE CLOSEST CLUSTER
+TOP_N = 10 # NUMBER OF TOP CLOSEST SONGS TO RETURN IN THE SEARCH RESULTS PAGE
 ```
 
-### 3. Run the Flask app 
-
-#### Build the image 
+---
+## 0. Build the image 
 
 To build the image, run from this directory (the root of the repo): 
 
 ```bash
- docker build -f dockerfiles/Dockerfile.app -t flask_app .
+docker build -f dockerfiles/Dockerfile.app -t final-project-app .
 ```
 
-This command builds the Docker image, with the tag `flask_app`, based on the instructions in `dockerfiles/Dockerfile.app` and the files existing in this directory.
-
-#### Running the app
-
-To run the Flask app, run: 
+or equivalently
 
 ```bash
- docker run --rm --mount type=bind, source="$(pwd)"/data, target=/app/data/ -p 5000:5000 flask_app
- docker run --env-file config/local/config --rm -it -p 5000:5000 flask_app
+make image-app
 ```
+
+---
+## 1. Running the app
+
+Before you run the Flask app, you would need your spotify api credentials,
+you can find these credentials in [this website](https://developer.spotify.com/dashboard/applications) as long as you have a Spotify account.
+All you need to do is to create an application, and then copy & paste the client IDs and the Secret.
+
+<img src="https://github.com/MSIA/2022-msia423-Zhu-Simon-project/blob/main/figures/spotify_1.png" alt="drawing" height="300" width="700"/>
+<img src="https://github.com/MSIA/2022-msia423-Zhu-Simon-project/blob/main/figures/spotify_2.png" alt="drawing" height="300" width="700"/>
+
+Now export these variables into your current shell.
+
+```bash
+export SQLALCHEMY_DATABASE_URI = ...
+export SPOTIPY_CLIENT_ID = ...
+export SPOTIPY_CLIENT_SECRET = ...
+```
+
+Now to run the Flask app, run: 
+
+```bash
+docker run \
+-e SPOTIPY_CLIENT_ID -e SPOTIPY_CLIENT_SECRET -e SQLALCHEMY_DATABASE_URI \
+-p 5000:5000 final-project-app
+```
+
+or equivalently
+
+```bash
+make app
+```
+
 You should be able to access the app at http://127.0.0.1:5000/ in your browser (Mac/Linux should also be able to access the app at http://127.0.0.1:5000/ or localhost:5000/) .
 
 The arguments in the above command do the following: 
@@ -251,71 +405,57 @@ The arguments in the above command do the following:
 
 Note: If `PORT` in `config/flaskconfig.py` is changed, this port should be changed accordingly (as should the `EXPOSE 5000` line in `dockerfiles/Dockerfile.app`)
 
-## Testing
+---
+# Testing
 
-Run the following:
+Several unit tests for the eligible functions in the `src/` folder are also provided in this repository.
+
+---
+## 0. Build the Image
 
 ```bash
- docker build -f dockerfiles/Dockerfile.test -t pennylanetest .
+docker build -f dockerfiles/Dockerfile.test -t final-project-test .
 ```
 
+or equivalently,
+
+```bash
+make image-test
+```
+
+---
+## 1. Run unit tests
 To run the tests, run: 
 
 ```bash
- docker run pennylanetest
+docker run final-project-test
 ```
 
-The following command will be executed within the container to run the provided unit tests under `test/`:  
+or equivalently
 
 ```bash
-python -m pytest
-``` 
-
-## Mypy
-
-Run the following:
-
-```bash
- docker build -f dockerfiles/Dockerfile.mypy -t pennymypy .
+make tests
 ```
 
-To run mypy over all files in the repo, run: 
+---
+# Other Utilities
 
+To clean all the filesand artifacts build along the way after running your model pipeline, run
 ```bash
- docker run pennymypy .
-```
-To allow for quick iteration, mount your entire repo so changes in Python files are detected:
-
-
-```bash
- docker run --mount type=bind,source="$(pwd)"/,target=/app/ pennymypy .
+make clean-files
 ```
 
-To run mypy for a single file, run: 
-
+To clean the docker containers that you have built since the beginning
 ```bash
- docker run pennymypy run.py
+make clean-containers
 ```
 
-## Pylint
-
-Run the following:
-
+To remove the images built for this project,
 ```bash
- docker build -f dockerfiles/Dockerfile.pylint -t pennylint .
+make clean-images
 ```
 
-To run pylint for a file, run:
-
+Or if you wanna delete everything that you've generated during this project, run
 ```bash
- docker run pennylint run.py 
-```
-
-(or any other file name, with its path relative to where you are executing the command from)
-
-To allow for quick iteration, mount your entire repo so changes in Python files are detected:
-
-
-```bash
- docker run --mount type=bind,source="$(pwd)"/,target=/app/ pennylint run.py
+make clean-all
 ```

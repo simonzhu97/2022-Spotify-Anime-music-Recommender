@@ -1,6 +1,6 @@
 
 .PHONY: model-all everything image-model s3-upload cleaned features models scores evaluate rds-create rds-ingest 
-.PHONY: image-app app image-test tests clean-containers clean-images clean-files
+.PHONY: image-app app image-test tests clean-containers clean-images clean-files clean-all
 # to run the model pipeline only
 model-all: cleaned features models scores evaluate
 # to run everything from data acquisition to rds creation
@@ -45,15 +45,15 @@ data/final/anime_clusters.csv models/kmeans.joblib &: data/intermediate/features
 models: data/final/anime_clusters.csv models/kmeans.joblib
 
 # score model
-data/final/sample_clusters.csv: data/sample/sample_search_songs.csv models/kmeans.joblib models/scalar.joblib
+models/sample_clusters.csv: data/sample/sample_search_songs.csv models/kmeans.joblib models/scalar.joblib
 	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
 	final-project run.py score --file_output=$@ --model=models/kmeans.joblib \
 	--input=$< --scalar=models/scalar.joblib
 
-scores: data/final/sample_clusters.csv
+scores: models/sample_clusters.csv
 
 # evaluate performance
-models/sample_eval.txt: data/final/sample_clusters.csv
+models/sample_eval.txt: models/sample_clusters.csv
 	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
 	final-project run.py evaluate --file_output=$@ \
 	--input=$<
@@ -108,3 +108,6 @@ clean-files:
 	rm -f models/*.png
 	rm -f models/*.joblib
 	rm -f models/*.txt
+
+# clean all
+clean-all: clean-containers clean-images clean-files
