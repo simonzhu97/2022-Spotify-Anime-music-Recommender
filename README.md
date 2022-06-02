@@ -79,8 +79,6 @@ Since the application aims to destigmatize anime and exhibits the diversity of a
 │   ├── intermediate/                 <- The artifacts generated throughout the model pipeline
 │
 ├── deliverables/                     <- Any white papers, presentations, final work products that are presented or delivered to a stakeholder 
-│
-├── docs/                             <- Sphinx documentation based on Python docstrings. Optional for this project.
 |
 ├── dockerfiles/                      <- Directory for all project-related Dockerfiles 
 │   ├── Dockerfile.app                <- Dockerfile for building image to run web app
