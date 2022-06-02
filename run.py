@@ -16,7 +16,7 @@ from config.flaskconfig import SQLALCHEMY_DATABASE_URI
 logging.config.fileConfig("config/logging/local.conf")
 logger = logging.getLogger("running_pipeline")
 
-S3_PATH = os.getenv("S3_PATH")
+S3_BUCKET = os.getenv("S3_BUCKET")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -74,10 +74,10 @@ if __name__ == '__main__':
             
     # taking actions based on step name
     if args.step == 'acquire':
-        upload_file_to_s3(args.input, S3_PATH)
+        upload_file_to_s3(args.input, S3_BUCKET)
     elif args.step == 'clean':
         # download file from s3 and save as an csv
-        download_file_from_s3(local_path=args.mid_output, s3path=S3_PATH)
+        download_file_from_s3(local_path=args.mid_output, s3path=S3_BUCKET)
         file_in = read_from_local(args.mid_output)
         file_out = clean(file_in, **config['preprocessing']['clean'])
     elif args.step == 'featurize':

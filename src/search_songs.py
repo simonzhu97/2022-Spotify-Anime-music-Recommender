@@ -1,4 +1,4 @@
-""" 
+"""
 Thhe module contains methods that
     1. searches for a song's features by calling Spotify's API
     2. returns the cluster of which the centroid is closest to the song in terms of cosine similarity
@@ -72,14 +72,16 @@ def form_query(song_name: str, artist_name: str) -> str:
     Returns:
         a query string
     """
-
+    # create two flags to indicate valid song_name or artist_name
+    f_song_name = (song_name is not None) and (song_name!="")
+    f_artist_name = (artist_name is not None) and (artist_name!="")
     # if the user types in both fields, we are gucci
-    if song_name and artist_name:
+    if f_song_name and f_artist_name:
         song_to_search = f"artist:{artist_name} track:{song_name}"
     # if either field but not both is missing, just search for whatever you have
-    elif song_name and not artist_name:
+    elif f_song_name and not f_artist_name:
         song_to_search = f"track:{song_name}"
-    elif artist_name and not song_name:
+    elif f_artist_name and not f_song_name:
         song_to_search = f"artist:{artist_name}"
     # if none is provided, raise an error
     else:
@@ -134,10 +136,18 @@ def valid_features(sub_features:list[str],all_features:list[str])->bool:
         a boolean indicating whether the sub_features are all valid
 
     Raises:
-        KeyError
+        TypeError: given list contains other than string types
     """
     if isinstance(sub_features,str):
         sub_features = [sub_features]
+    if len(sub_features)==0:
+        logger.info("No features are selected for sub_features")
+        return True
+    if len(sub_features) > len(all_features):
+        return False
+    # check if the types of the two lists are identical
+    if not isinstance(sub_features[0],str) or not isinstance(all_features[0],str):
+        raise TypeError("Given list contains types other than string")
     # check if the features provided exist
     for fea in sub_features:
         if not (fea in all_features):
@@ -153,6 +163,9 @@ def get_closest_cluster(df_song:pd.DataFrame,
         df_song -- dataframe of songs including their features
         centroids -- the datafram containing info about centroids
         features -- the features to use when calculating distance
+
+    Raises:
+        KeyError -- Nonexisting features
 
     Returns:
         if df_song contains only one song, returns the closest clusterId

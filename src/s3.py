@@ -19,6 +19,7 @@ def parse_s3(s3path: str) -> tuple[str, str]:
     """
     # pattern of a regular s3 path
     regex = r"s3://([\w._-]+)/([\w./_-]+)"
+    logger.debug("Given s3path: %s",s3path)
 
     matches = re.match(regex, s3path)
     s3bucket = matches.group(1)
