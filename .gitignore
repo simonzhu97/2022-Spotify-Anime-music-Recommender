@@ -11,7 +11,6 @@ evaluate.ipynb
 .pylintrc
 .cache
 
-
 data/**/*.csv
 !data/sample/
 !data/external/
