@@ -3,14 +3,15 @@ Author: Simon Zhu
 
 # Table of Contents
 * [Project Charter](#Project-Charter)
-* [Directory structure ](#Directory-structure)
-* [Running the app ](#Running-the-app)
-	* [1. Initialize the database ](#1.-Initialize-the-database)
-	* [2. Configure Flask app ](#2.-Configure-Flask-app)
-	* [3. Run the Flask app ](#3.-Run-the-Flask-app)
+* [Directory Structure ](#Directory-structure)
+* [Running the Pipeline ](#Running-Data-Acquisition,Model-Pipeline-and-Relational-Data-Ingestion)
+	* [0. Build image](#0.-Build-docker-image-for-the-pipeline)
+	* [1. Data Acquisition](#1.-Data-Acquisition)
+	* [2. Model Pipeline](#2.-Model-Pipeline)
+	* [3. Relational Data Ingestion](#3.-Relational-Data-Ingestion)
+* [Running the web app](#running-the-web-app)
 * [Testing](#Testing)
-* [Mypy](#Mypy)
-* [Pylint](#Pylint)
+* [Other Utilities](#Other-Utilies)
 
 # Project Charter
 ## Background
@@ -370,8 +371,8 @@ Before you run the Flask app, you would need your spotify api credentials,
 you can find these credentials in [this website](https://developer.spotify.com/dashboard/applications) as long as you have a Spotify account.
 All you need to do is to create an application, and then copy & paste the client IDs and the Secret.
 
-<img src="https://github.com/MSIA/2022-msia423-Zhu-Simon-project/blob/main/figures/spotify_1.png" alt="drawing" height="300" width="700"/>
-<img src="https://github.com/MSIA/2022-msia423-Zhu-Simon-project/blob/main/figures/spotify_2.png" alt="drawing" height="300" width="700"/>
+<img src="https://github.com/MSIA/2022-msia423-Zhu-Simon-project/blob/main/figures/spotify_1.png" alt="drawing" height="300" width="1000"/>
+<img src="https://github.com/MSIA/2022-msia423-Zhu-Simon-project/blob/main/figures/spotify_2.png" alt="drawing" height="300" width="1000"/>
 
 Now export these variables into your current shell.
 
