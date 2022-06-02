@@ -1,18 +1,20 @@
 __pycache__/
 *.pyc
 *.py[cod]
+.pytest_cache
 *.class
 .DS_Store
 .idea/
 .log
 .ipynb_checkpoints/
 evaluate.ipynb
+.pylintrc
+.cache
 
 
-data/*
+data/**/*.csv
 !data/sample/
 !data/external/
 !data/raw/
-!data/final/
 config/local/*
 !.gitkeep

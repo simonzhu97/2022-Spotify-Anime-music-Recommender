@@ -2,7 +2,6 @@
 Use a clusering model to cluster the anime songs
 """
 import logging
-from typing import Optional
 
 import joblib
 import matplotlib.pyplot as plt  # type: ignore
@@ -17,7 +16,8 @@ from src.preprocessing import validate_features
 logger = logging.getLogger(__name__)
 WRONG_INDICATOR = -10
 
-def get_train_data(df: pd.DataFrame, cols:list[str]) -> pd.DataFrame:
+
+def get_train_data(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     """Get the training data based on features given
 
     Arguments:
@@ -46,39 +46,31 @@ def get_train_data(df: pd.DataFrame, cols:list[str]) -> pd.DataFrame:
                      df_in.columns)
     return df_in
 
-def get_models_dict(df:pd.DataFrame, cols:list[str],
-                    k_range:list[int],
-                    seed=42, return_list=False)->tuple[dict,Optional[list]]:
-    """run several K-means models with different number of clusters K on a dataframe
+
+def get_model(df: pd.DataFrame, cols: list[str],
+              k: int,
+              seed=42) -> BaseEstimator:
+    """run a K-means model on a dataframe
 
     Arguments:
         df -- dataframe to work on
         cols -- features to include in the K-Means algorithm
-        k_range -- range of number of clusters to try
+        k -- number of clusters
 
     Keyword Arguments:
         seed -- random state seed (default: {42})
-        return_list -- whether to also return a list of models (default: {False})
 
     Returns:
-        If return_list = True, will return both a dictionary and a list of different KMeans models
-        If return_list = False, will only return a dictionary of different KMeans models
+        a KMeans models
     """
     df_in = get_train_data(df, cols)
-    model_dict = {}
-    # create different KMeans models
-    for k in k_range:
-        mod = KMeans(n_clusters=k, random_state=seed).fit(df_in)
-        model_dict[str(k)] = mod
-    res = model_dict
+    # create a KMeans models
+    mod = KMeans(n_clusters=k, random_state=seed).fit(df_in)
+    return mod
 
-    if return_list:
-        ls_mods = list(model_dict.values())
-        res = (model_dict, ls_mods)
-    return res
 
-def plot_models_performance(df:pd.DataFrame,
-                            mod_list:list[BaseEstimator],
+def plot_models_performance(df: pd.DataFrame,
+                            mod_list: list[BaseEstimator],
                             k_range: list[int]) -> plt.figure:
     """
     Plot silhouette scores and inertia to identify the optimal
@@ -95,48 +87,41 @@ def plot_models_performance(df:pd.DataFrame,
     # check if the cols
     within_ss = [i.inertia_ for i in mod_list]
     try:
-        silhouette_list = [silhouette_score(df[i.feature_names_in_], i.labels_) for i in mod_list]
+        silhouette_list = [silhouette_score(
+            df[i.feature_names_in_], i.labels_) for i in mod_list]
     except KeyError as err:
         logger.error("The dataframe does not contain features used in the KMeans model."
                      "Please recheck the dataframe.")
         raise err
 
     # check if k_range corresponds with that from KMeans model
-    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(15,5))
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(15, 5))
     if len(k_range) != len(within_ss):
-        logger.error("The k_range given does not align with that from the modeling process!")
+        logger.error(
+            "The k_range given does not align with that from the modeling process!")
         logger.warning("The x-labels of the graphs will be off.")
-        k_range = list(range(WRONG_INDICATOR,len(within_ss)+WRONG_INDICATOR))
-    axs[0].plot(k_range, within_ss, color='red')
-    axs[1].plot(k_range, silhouette_list, color='orange')
+        k_range = list(range(WRONG_INDICATOR, len(within_ss)+WRONG_INDICATOR))
+    axs[0].plot(k_range, within_ss, color="red")
+    axs[1].plot(k_range, silhouette_list, color="orange")
 
     for i in range(2):
-        axs[i].set_xlabel('number of clusters')
-    for idx, name in zip([0,1,2], ['inertia', 'silhouette score']):
+        axs[i].set_xlabel("number of clusters")
+    for idx, name in zip([0, 1, 2], ["inertia", "silhouette score"]):
         axs[idx].set_ylabel(name)
     return fig
 
-def save_model(model_dict: dict, best_num: str, output_path: str) -> BaseEstimator:
-    """A helper function that saves the dict of models to a path
+
+def save_model(model: BaseEstimator, output_path: str) -> None:
+    """A helper function that saves a model to a path
 
     Arguments:
-        model_dict -- A dictionary of KMeans models (num_of_cluster: MODEL)
-        best_num -- the optimal number of cluster
+        model -- Any model or sclaer class
         output_path -- the path to store the best model
-        
-    Returns:
-        the best model
+
     """
-    # ensure that the best_num is string
-    if isinstance(best_num,int):
-        best_num = str(best_num)
     try:
-        joblib.dump(model_dict[best_num], output_path)
-        logger.info('The model is saved to %s', output_path)
-        return model_dict[best_num]
+        joblib.dump(model, output_path)
+        logger.info("The model is saved to %s", output_path)
     except FileNotFoundError as err:
         logger.error("Path does not exist at %s", output_path)
-        raise err
-    except KeyError as err:
-        logger.error("Model with the given best_num %s has not been built yet!", best_num)
         raise err

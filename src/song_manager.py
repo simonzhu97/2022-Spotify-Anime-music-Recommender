@@ -4,14 +4,13 @@
 import logging.config
 import sqlite3
 import typing
-import pandas as pd
 
 import flask
+import pandas as pd
 import sqlalchemy
 import sqlalchemy.orm
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.declarative import declarative_base
-
 
 logger = logging.getLogger(__name__)
 
@@ -19,45 +18,48 @@ Base: typing.Any = declarative_base()
 
 
 class Songs(Base):
-    """Creates a data model for the database to be set up for capturing songs 
+    """Creates a data model for the database to be set up for capturing songs
     and assigning songs cluster ids.
     """
 
-    __tablename__ = 'songs'
+    __tablename__ = "songs"
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     title = sqlalchemy.Column(sqlalchemy.UnicodeText(100), unique=False,
                               nullable=False)
     clusterId = sqlalchemy.Column(sqlalchemy.Integer, unique=False,
-                              nullable=False)
-    
+                                  nullable=False)
+
     danceability = sqlalchemy.Column(sqlalchemy.Float, unique=False,
-                              nullable=False)
+                                     nullable=False)
     energy = sqlalchemy.Column(sqlalchemy.Float, unique=False,
-                              nullable=False)
+                               nullable=False)
     loudness = sqlalchemy.Column(sqlalchemy.Float, unique=False,
-                              nullable=False)
+                                 nullable=False)
     key = sqlalchemy.Column(sqlalchemy.Integer, unique=False,
-                              nullable=False)
+                            nullable=False)
     speechiness = sqlalchemy.Column(sqlalchemy.Float, unique=False,
-                              nullable=False)
+                                    nullable=False)
     acousticness = sqlalchemy.Column(sqlalchemy.Float, unique=False,
-                              nullable=False)
+                                     nullable=False)
     instrumentalness = sqlalchemy.Column(sqlalchemy.Float, unique=False,
-                              nullable=False)
+                                         nullable=False)
     liveness = sqlalchemy.Column(sqlalchemy.Float, unique=False,
-                              nullable=False)
+                                 nullable=False)
     valence = sqlalchemy.Column(sqlalchemy.Float, unique=False,
-                              nullable=False)
+                                nullable=False)
     tempo = sqlalchemy.Column(sqlalchemy.Float, unique=False,
                               nullable=False)
     duration = sqlalchemy.Column(sqlalchemy.Integer, unique=False,
-                              nullable=False)
+                                 nullable=False)
     track_uri = sqlalchemy.Column(sqlalchemy.String(200), unique=True,
-                               nullable=False)
+                                  nullable=False)
 
     def __repr__(self):
-        return f'<Song {self.title} {self.track_uri}>'
+        return f"<Song {self.title} {self.track_uri}>"
+
+    def __str__(self):
+        return f"<Song {self.title} {self.track_uri}>"
 
 
 class SongManager:
@@ -69,6 +71,7 @@ class SongManager:
         engine_string (str): SQLAlchemy engine string specifying which database
             to write to.
     """
+
     def __init__(self, app: typing.Optional[flask.app.Flask] = None,
                  engine_string: typing.Optional[str] = None):
         if app:
@@ -89,7 +92,7 @@ class SongManager:
 
         """
         self.session.close()
-    
+
     def add_song(self, **kwargs) -> None:
         """Seeds an existing database with additional songs.
 
@@ -105,30 +108,31 @@ class SongManager:
         session.add(song)
         session.commit()
         try:
-            title = kwargs['title']
-            logger.info(f"A song called {title} is added to database")
+            title = kwargs["title"]
+            logger.info("A song called %s is added to database", title)
         except KeyError:
             logger.error("The input song features do not contain 'title'")
-    
+
     def add_songs_from_csv(self, data_path: str) -> None:
         """Reads songs from a csv file and add them to the database
 
         Arguments:
             data_path -- the path to the csv file to read
         """
-        
-        session =  self.session
-        
+
+        session = self.session
+
         # transform the dataframe to a dictionary for convenience
-        data_list = pd.read_csv(data_path).to_dict(orient='records')
+        data_list = pd.read_csv(data_path).to_dict(orient="records")
         persist_list = []
-        
+
         # prepare data to persist into the database
         for data in data_list:
             persist_list.append(Songs(**data))
-        
-        logger.debug("%d records are prepared to be persisted",len(persist_list))
-        
+
+        logger.debug("%d records are prepared to be persisted",
+                     len(persist_list))
+
         # add all songs to the database
         try:
             session.add_all(persist_list)
@@ -143,12 +147,13 @@ class SongManager:
                 "Error page returned. Not able to add song to MySQL database.  "
                 "Please check engine string and VPN. \n Error: %s ", err)
         except sqlalchemy.exc.IntegrityError:
-            my_message = ('Have you already inserted the same record into the database before? \n'
-                          'This database does not allow duplicate in the input-recommendation pair')
-            logger.error("%s \n The original error message is: ", my_message, exc_info=True)
+            my_message = ("Have you already inserted the same record into the database before? \n"
+                          "This database does not allow duplicate in the input-recommendation pair")
+            logger.error("%s \n The original error message is: ",
+                         my_message, exc_info=True)
         else:
             logger.info("%d songs have been added to the database!",
-                        len(persist_list) )
+                        len(persist_list))
 
 
 def create_db(engine_string: str) -> None:
@@ -165,4 +170,3 @@ def create_db(engine_string: str) -> None:
 
     Base.metadata.create_all(engine)
     logger.info("Database created.")
-

@@ -120,10 +120,8 @@ def get_entry():
 
         # get closest cluster
         cluster_id = get_closest_cluster(song_features, centroids,
-                                        app.config['FEATURES'], app.config['TARGET'])
-        
-        
-        
+                                        app.config['FEATURES'])
+
         logger.info("Song queried: %s by %s", request.form['song_name'],
                     request.form['artist'])
         logger.debug("The closest cluster is Cluster %d", cluster_id)
@@ -138,7 +136,7 @@ def get_entry():
         
         # find the closest ones in terms of cosine_similarity
         top_songs = get_top_n_closest_song(
-            song_features, songs, app.config['FEATURES'], app.config['TARGET'], app.config['TOP_N'],
+            song_features, songs, app.config['FEATURES'], app.config['TOP_N'],
             cluster_id=cluster_id)
         
         return render_template('search_results.html',

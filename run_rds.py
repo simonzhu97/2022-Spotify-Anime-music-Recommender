@@ -21,7 +21,7 @@ if __name__ == "__main__":
                         help="This argument decides whether to create a new database"
                         "Or to add data to a current database. You can choose between `create`"
                         "or  `add_data`",
-                        choices=['create', 'add_data'])
+                        choices=["create", "add_data"])
     parser.add_argument("--engine_string", default=SQLALCHEMY_DATABASE_URI,
                         help="SQLAlchemy connection URI for database")
     parser.add_argument("--data_path", default="data/intermediate/clustered_songs.csv",
@@ -34,10 +34,9 @@ if __name__ == "__main__":
         # test database connection
         try:
             songs.create_db(args.engine_string)
-        except sqlalchemy.exc.OperationalError as e:
+        except sqlalchemy.exc.OperationalError as err:
             logger.error("Could not connect to database!")
-            logger.debug("Database URI: %s", )
-            raise e
+            raise err
     else:
         # add data from the csv file line by line to the database
         sm = songs.SongManager(engine_string=args.engine_string)

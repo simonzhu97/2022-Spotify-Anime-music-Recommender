@@ -1,78 +1,113 @@
 
-.PHONY: all image-model s3-upload cleaned features models scores rds-create rds-ingest clean-docker clean-files
-all: data/intermediate/cleaned.csv data/intermediate/features.csv models/res_plots.png models/kmeans.joblib data/final/clusters.csv
+.PHONY: model-all everything image-model s3-upload cleaned features models scores evaluate rds-create rds-ingest 
+.PHONY: image-app app image-test tests clean-containers clean-images clean-files clean-all
+# to run the model pipeline only
+model-all: cleaned features models scores evaluate
+# to run everything from data acquisition to rds creation
+everything: s3-upload model-all rds-create rds-ingest app
 
 image-model:
 	docker build -f dockerfiles/Dockerfile -t final-project .
 
-# data acquisition
+################################# data acquisition #######################################
 s3-upload: data/raw/anime_songs.csv
 	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
-	--env-file config/local/config final-project run.py acquire --input=$<
+	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e S3_BUCKET \
+	final-project run.py acquire --input=$<
 
-# model pipeline starts here
+################################# model pipeline starts here #############################
+# clean & preprocess
 data/intermediate/cleaned.csv: config/model.yaml
 	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
-	--env-file config/local/config final-project run.py clean \
+	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e S3_BUCKET \
+	final-project run.py clean \
 	--file_output=data/intermediate/cleaned.csv --config=$< \
 	--mid_output=data/raw/downloaded.csv
 
 cleaned: data/intermediate/cleaned.csv
 
-data/intermediate/features.csv: data/intermediate/cleaned.csv config/model.yaml
+# generate features
+data/intermediate/features.csv models/scalar.joblib &: data/intermediate/cleaned.csv config/model.yaml
 	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
-	--env-file config/local/config final-project run.py featurize --file_output=$@ --input=$< --config=config/model.yaml
+	final-project run.py featurize --file_output=data/intermediate/features.csv \
+	--input=$< --config=config/model.yaml \
+	--model_output=models/scalar.joblib
 
-features: data/intermediate/features.csv
+features: data/intermediate/features.csv models/scalar.joblib
 
-data/final/anime_clusters.csv models/kmeans.joblib &: data/intermediate/features.csv config/model.yaml
+# train model
+data/final/anime_clusters.csv models/kmeans.joblib &: data/intermediate/features.csv data/intermediate/cleaned.csv config/model.yaml
 	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
-	--env-file config/local/config final-project run.py train --file_output=data/final/anime_clusters.csv \
+	final-project run.py train --file_output=data/final/anime_clusters.csv \
 	--model_output=models/kmeans.joblib \
-	--input=$< --config=config/model.yaml
+	--input=$< --config=config/model.yaml --origin_data=data/intermediate/cleaned.csv
 
 models: data/final/anime_clusters.csv models/kmeans.joblib
 
-data/final/sample_clusters.csv: data/sample/sample_search_songs.csv models/kmeans.joblib
+# score model
+models/sample_clusters.csv: data/sample/sample_search_songs.csv models/kmeans.joblib models/scalar.joblib
 	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
-	--env-file config/local/config final-project run.py score --file_output=$@ --model=models/kmeans.joblib \
+	final-project run.py score --file_output=$@ --model=models/kmeans.joblib \
+	--input=$< --scalar=models/scalar.joblib
+
+scores: models/sample_clusters.csv
+
+# evaluate performance
+models/sample_eval.txt: models/sample_clusters.csv
+	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
+	final-project run.py evaluate --file_output=$@ \
 	--input=$<
 
-scores: data/final/sample_clusters.csv
+evaluate: models/sample_eval.txt
 
-data/final/sample_eval.txt: data/final/sample_clusters.csv
-	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
-	--env-file config/local/config final-project run.py evaluate --file_output=$@ \
-	--input=$<
-
-# ingest data to RDS instance
+################################# relational data ingestion #############################
 rds-create:
 	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
-	--env-file config/local/config final-project run_rds.py create
+	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e SQLALCHEMY_DATABASE_URI \
+	final-project run_rds.py create
 
 rds-ingest: data/final/anime_clusters.csv
 	docker run --mount type=bind,source="$(shell pwd)",target=/app/ \
-	--env-file config/local/config final-project run_rds.py add_data \
+	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e SQLALCHEMY_DATABASE_URI \
+	final-project run_rds.py add_data \
 	--data_path=$<
 
+################################# web app ##############################################
 # web app deployment
 image-app:
 	docker build -f dockerfiles/Dockerfile.app -t final-project-app .
 
 app: config/flaskconfig.py
-	docker run --env-file config/local/config -p 5000:5000 final-project-app
+	docker run \
+	-e SPOTIPY_CLIENT_ID -e SPOTIPY_CLIENT_SECRET -e SQLALCHEMY_DATABASE_URI \
+	-p 5000:5000 final-project-app
 
+################################# unit tests ##############################################
+# unit tests
+image-test:
+	docker build -f dockerfiles/Dockerfile.test -t final-project-test .
+
+tests:
+	docker run final-project-test
+
+################################# utilities ##############################################
 # clean up all docker images and containers
-clean-docker:
+clean-containers:
+	docker container prune
+
+clean-images:
 	docker image rm -f final-project
 	docker image rm -f final-project-app
-	docker container prune
+	docker image rm -f final-project-test
 
 # clean up all intermediary artifacts
 clean-files:
-	rm -f data/intermediate/cleaned.csv
-	rm -f data/intermediate/features.csv
+	rm -f data/intermediate/*.csv
 	rm -f data/raw/downloaded.csv
-	rm -f data/final/clusters.csv
+	rm -f data/final/*.csv
 	rm -f models/*.png
 	rm -f models/*.joblib
+	rm -f models/*.txt
+
+# clean all
+clean-all: clean-containers clean-images clean-files

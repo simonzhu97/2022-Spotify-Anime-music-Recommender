@@ -43,9 +43,19 @@ def validate_features(df: pd.DataFrame, features: list[str]) -> bool:
         df -- the given dataframe
         features -- the features to check
 
+    Raises:
+        TypeError: not given dataframe
+
     Returns:
         True/False
     """
+    if not isinstance(df, pd.DataFrame):
+        logger.error("The given first argument is not a pandas dataframe, but a %s",
+                     type(df))
+        raise TypeError("Not pandas dataframe")
+    if len(features) == 0:
+        logger.warning("The given feature list is empty!")
+        return False
     for fea in features:
         if fea not in df.columns:
             return False
@@ -66,11 +76,15 @@ def clean(df_in: pd.DataFrame, col_mapper: dict, features: list[str]) -> pd.Data
     # ensure the col_mapper is indeed a dictionary
     if isinstance(col_mapper, dict):
         df_new = df_in.rename(columns=col_mapper)
+        if not validate_features(df_in, col_mapper.keys()):
+            logger.warning("Some of the column mapper entries are not used"
+                           "as they do not exist in original dataframe")
     else:
         logger.error("col_mapper needs to be a dictionary, but now it is a %s",
                      type(col_mapper))
         logger.error("No columns are renamed.")
-    
+        df_new = df_in
+
     # check if features exist`
     if validate_features(df_new, features):
         df_new = df_new[features]
@@ -81,16 +95,25 @@ def clean(df_in: pd.DataFrame, col_mapper: dict, features: list[str]) -> pd.Data
     return df_new
 
 
-def featurize(df_in: pd.DataFrame, features: list[str]) -> pd.DataFrame:
+def featurize(df_in: pd.DataFrame, features: list[str]) -> tuple[pd.DataFrame, StandardScaler]:
     """Generate features from the cleaned dataset
 
     Arguments:
         df_in -- the cleaned dataframe
         features -- list of features to include in the final dataframe
 
+    Raises:
+        TypeError -- the first argument is not a pandas dataframe
+
     Returns:
         a dataframe with scaled columns
+        the standard scaler used in this function
     """
+    # validate that it is a dataframe
+    if not isinstance(df_in, pd.DataFrame):
+        logger.error("The first argument should be a pandas dataframe,"
+                     "but it is now %s", type(df_in))
+        raise TypeError("Not a pandas dataframe")
     # check if features exist`
     if validate_features(df_in, features):
         df_in = df_in[features]
@@ -103,9 +126,10 @@ def featurize(df_in: pd.DataFrame, features: list[str]) -> pd.DataFrame:
     std_scale = StandardScaler()
     df_num = df_in.select_dtypes(include=np.number)
     df_rest = df_in.select_dtypes(exclude=np.number)
-    df_scale = pd.DataFrame(std_scale.fit_transform(df_num),
+    std_scale.fit(df_num)
+    df_scale = pd.DataFrame(std_scale.transform(df_num),
                             columns=df_num.columns)
     # combine numerical and non-numerical columns
     df_fin = pd.concat([df_scale, df_rest], axis=1)
 
-    return df_fin
+    return df_fin, std_scale
