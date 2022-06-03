@@ -3,11 +3,13 @@ get_train_data
 get_model
 """
 
+import numpy as np
 import pandas as pd
 import pytest
 from sklearn.cluster import KMeans
 
 import src.model as mod
+
 
 # Define expected input dataframe
 df_in_values = [[0, 0.627, 0.824, 1, -3.419, 1, 0.118, 0.0699, 6.57e-05, 0.31, 0.774, 169.935, "audio_features",
@@ -61,6 +63,10 @@ def test_get_model():
     fit = mod.get_model(df_in, feature_columns, 2, 42)
 
     assert isinstance(fit, KMeans)
+    # ensure the model outputs are the same as expected
+    assert fit.feature_names_in_== feature_columns
+    assert np.allclose(fit.cluster_centers_,
+                       np.array([[0.573],[0.627]]))
 
 
 def test_get_model_not_valid_data():

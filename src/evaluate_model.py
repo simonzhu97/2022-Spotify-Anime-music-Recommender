@@ -3,7 +3,9 @@ Assign each song a clusterId based on the optimal KMeans model
 Evaluate the KMeans model results
 """
 import logging
+from collections import Counter
 
+import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.cluster import KMeans
@@ -22,11 +24,20 @@ def assign_labels(df_features: pd.DataFrame, model: BaseEstimator) -> pd.DataFra
         df_features -- featurized dataset
         model -- trained KMeans model
 
+    Raises:
+        KeyError -- "Unmatched columns between the model and df_features"
+
     Returns:
         dataframe that has clusterId to it
     """
+    # if the features in df_features do not match those of models
+    # something is wrong!
+    if Counter(list(df_features.columns)) != Counter(model.feature_names_in_):
+        logger.error("Unmatched columns between the model and df_features")
+        raise KeyError("Unmatched columns between the model and df_features")
+
     df_new = pd.concat([df_features, pd.Series(
-        model.labels_, name="clusterId")], axis=1)
+        model.labels_.astype(np.int64), name="clusterId")], axis=1)
     return df_new
 
 
