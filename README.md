@@ -330,6 +330,8 @@ make rds-ingest
 
 # Running the web app
 
+___Note: You have to be on the Northwestern VPN in order to run this app.__
+
 `config/flaskconfig.py` holds the configurations for the Flask app. It includes the following configurations:
 
 ```python
