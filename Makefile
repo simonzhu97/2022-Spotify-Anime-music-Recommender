@@ -85,10 +85,10 @@ app: config/flaskconfig.py
 ################################# unit tests ##############################################
 # unit tests
 image-test:
-	docker build -f dockerfiles/Dockerfile.test -t final-project-test .
+	docker build -f dockerfiles/Dockerfile.test -t final-project-tests .
 
 tests:
-	docker run final-project-test
+	docker run final-project-tests
 
 ################################# utilities ##############################################
 # clean up all docker images and containers
@@ -98,7 +98,7 @@ clean-containers:
 clean-images:
 	docker image rm -f final-project
 	docker image rm -f final-project-app
-	docker image rm -f final-project-test
+	docker image rm -f final-project-tests
 
 # clean up all intermediary artifacts
 clean-files:

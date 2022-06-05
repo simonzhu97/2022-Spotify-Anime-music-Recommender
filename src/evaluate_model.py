@@ -3,7 +3,6 @@ Assign each song a clusterId based on the optimal KMeans model
 Evaluate the KMeans model results
 """
 import logging
-from collections import Counter
 
 import numpy as np
 import pandas as pd
@@ -32,7 +31,7 @@ def assign_labels(df_features: pd.DataFrame, model: BaseEstimator) -> pd.DataFra
     """
     # if the features in df_features do not match those of models
     # something is wrong!
-    if Counter(list(df_features.columns)) != Counter(model.feature_names_in_):
+    if len(list(df_features.columns)) < len(model.feature_names_in_):
         logger.error("Unmatched columns between the model and df_features")
         raise KeyError("Unmatched columns between the model and df_features")
 

@@ -415,7 +415,7 @@ Several unit tests for the eligible functions in the `src/` folder are also prov
 ## 0. Build the Image
 
 ```bash
-docker build -f dockerfiles/Dockerfile.test -t final-project-test .
+docker build -f dockerfiles/Dockerfile.test -t final-project-tests .
 ```
 
 or equivalently,
@@ -429,7 +429,7 @@ make image-test
 To run the tests, run: 
 
 ```bash
-docker run final-project-test
+docker run final-project-tests
 ```
 
 or equivalently
